@@ -1,0 +1,121 @@
+{	
+	"0":
+	{
+		"name":"戰士",
+		"minLevel":1,
+		"HP":22,
+		"MP":0,
+		"STR":4,
+		"DEX":-2,
+		"CON":2,
+		"INT":0,
+		"technique":"熱血",
+		"describe":"熱血衝鋒的勇者，比一般常人更加有力量"
+	},
+	
+	"1":
+	{
+		"name":"遊俠",
+		"minLevel":1,
+		"HP":-3,
+		"MP":0,
+		"STR":1,
+		"DEX":4,
+		"CON":-1,
+		"INT":1,
+		"technique":"精確瞄準",
+		"describe":"森林中的獵手，能夠在地形中穿梭"
+	},
+	
+	"2":
+	{
+		"name":"法師",
+		"minLevel":1,
+		"HP":2,
+		"MP":28,
+		"STR":1,
+		"DEX":2,
+		"CON":0,
+		"INT":4,
+		"technique":"魔能驅動",
+		"describe":"獨自學習的高人，能夠施放增益和範圍魔法"
+	},
+
+		"3":
+	{
+		"name":"騎士",
+		"minLevel":10,
+		"HP":38,
+		"MP":0,
+		"STR":1,
+		"DEX":-3,
+		"CON":7,
+		"INT":0,
+		"technique":"堅硬",
+		"describe":"站在隊伍的前方，比其他人有更好的體質"
+	},
+	
+	"4":
+	{
+		"name":"盜賊",
+		"minLevel":10,
+		"HP":-1,
+		"MP":0,
+		"STR":3,
+		"DEX":7,
+		"CON":-2,
+		"INT":3,
+		"technique":"背刺",
+		"describe":"擅長躲在陰暗的地方，發動突擊"
+	},
+	
+	"5":
+	{
+		"name":"牧師",
+		"minLevel":10,
+		"HP":29,
+		"MP":49,
+		"STR":3,
+		"DEX":2,
+		"CON":4,
+		"INT":7,
+		"technique":"療癒",
+		"describe":"隊伍中的輔助，能夠治療大家"
+	},
+  "6": {
+    "name": "獵人",
+    "minLevel": 15,
+    "HP": 22,
+    "MP": 5,
+    "STR": 3,
+    "DEX": 6,
+    "CON": 1,
+    "INT": 1,
+    "technique": "追蹤",
+    "describe": "擅長追蹤並射擊敵人"
+  },
+  "7": {
+    "name": "術士",
+    "minLevel": 15,
+    "HP": 15,
+    "MP": 50,
+    "STR": 2,
+    "DEX": 2,
+    "CON": 0,
+    "INT": 8,
+    "technique": "暗影法術",
+    "describe": "操縱黑暗力量的高級法師"
+  },
+  "8": {
+    "name": "魔法劍士",
+    "minLevel": 20,
+    "HP": 30,
+    "MP": 15,
+    "STR": 5,
+    "DEX": 2,
+    "CON": 3,
+    "INT": 4,
+    "technique": "劍之魔法",
+    "describe": "能夠融合劍與魔法的獨特戰士"
+  }
+}

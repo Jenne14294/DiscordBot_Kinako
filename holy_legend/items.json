@@ -1,0 +1,175 @@
+{
+	"0":
+	{
+		"name": "生命藥水(小)",
+		"describe": "回復150點生命值",
+		"buy": 75,
+		"sell": 15,
+		"utility": 150,
+		"type": "HP"
+	},
+	
+	"1":
+	{
+		"name": "生命藥水(中)",
+		"describe": "回復400點生命值",
+		"buy": 175,
+		"sell": 75,
+		"utility": 400,
+		"type": "HP"
+	},
+	
+	"2":
+	{
+		"name": "生命藥水(大)",
+		"describe": "回復1000點生命值",
+		"buy": 300,
+		"sell": 125,
+		"utility": 1000,
+		"type": "HP"
+	},
+	
+	"3":
+	{
+		"name": "魔力藥水(小)",
+		"describe": "回復30點魔力值",
+		"buy": 125,
+		"sell": 60,
+		"utility": 30,
+		"type": "MP"
+	},
+	
+	"4":
+	{
+		"name": "魔力藥水(中)",
+		"describe": "回復100點魔力值",
+		"buy": 300,
+		"sell": 200,
+		"utility": 100,
+		"type": "MP"
+	},
+	
+	"5":
+	{
+		"name": "魔力藥水(大)",
+		"describe": "回復400點魔力值",
+		"buy": 600,
+		"sell": 275,
+		"utility": 400,
+		"type": "MP"
+	},
+	
+	"6":
+	{
+		"name": "祝福之圖騰",
+		"describe": "復活並回復生命值",
+		"buy": 2500,
+		"sell": 1000,
+		"type": "revive"
+	},
+
+	"7":
+	{
+		"name": "黏液",
+		"describe": "滑滑的果凍?從史萊姆身上掉落的",
+		"sell": 3,
+		"type": "item"
+	},
+	
+	"8":
+	{
+		"name": "毒刺",
+		"describe": "黃蜂身上的刺，上面略帶有一些毒",
+		"sell": 5,
+		"type": "item"
+	},
+
+	"9":
+	{
+		"name": "狼皮",
+		"describe": "野狼身上的皮,能當作衣物的材料",
+		"sell": 8,
+		"type": "item"
+	},
+
+	"10":
+	{
+		"name": "哥布林之牙",
+		"describe": "哥布林的牙齒，摸起來有點堅硬",
+		"sell": 15,
+		"type": "item"
+	},
+	
+	"11":
+	{
+		"name": "蘑菇",
+		"describe": "普通的蘑菇，長在蘑菇怪身上",
+		"sell": 12,
+		"type": "item"
+	},
+	
+	"12":
+	{
+		"name": "石頭碎片",
+		"describe": "石像鬼的碎片，表面很鋒利",
+		"sell": 18,
+		"type": "item"
+	},
+	
+	"13":
+	{
+		"name": "魔法之塵",
+		"describe": "具有魔力的塵埃",
+		"sell": 20,
+		"type": "item"
+	},
+	
+	"14":
+	{
+		"name": "妖精之翼",
+		"describe": "妖精的翅膀，很脆弱一碰就可能會碎掉",
+		"sell": 25,
+		"type": "item"
+	},
+	
+	"15":
+	{
+		"name": "巨熊皮毛",
+		"describe": "巨熊的皮毛，比一般布料還要重",
+		"sell": 23,
+		"type": "item"
+	},
+	
+	"16":
+	{
+		"name": "蟲殼",
+		"describe": "巨蟲的殼，摸起來脆脆的",
+		"sell": 28,
+		"type": "item"
+	},
+
+	"17":
+	{
+		"name": "骷髏之骨",
+		"describe": "骷髏的骨頭，卻有乾燥的感覺",
+		"sell": 30,
+		"type": "item"
+	},
+	
+	"18":
+	{
+		"name": "蝙蝠之翼",
+		"describe": "蝙蝠的翅膀，摸起來黏黏滑滑的",
+		"sell": 32,
+		"type": "item"
+	},
+
+	"19":
+	{
+		"name": "地精之眼",
+		"describe": "地精的眼睛，正在盯著你看",
+		"sell": 35,
+		"type": "item"
+	}
+	
+}

@@ -1,0 +1,10 @@
+{
+    "join_channel":null,
+    "join_message":null,
+    "leave_channel":null,
+    "leave_message":null,
+    "greet_channel":null,
+    "greet_message":null,
+    "greet_message_id":null,
+    "AD_time":180
+}

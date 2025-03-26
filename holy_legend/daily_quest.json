@@ -1,0 +1,69 @@
+{
+	"0" : 
+	{
+		"title" : "黏液收集",
+		"content" : "收集15個史萊姆黏液",
+    "amount" : 15,
+		"needItem" : "黏液",
+		"reward" : 200,
+		"rewardItem" : "金錢"
+	},
+
+	"1" : 
+	{
+		"title" : "藥品支援",
+		"content" : "幫村民們購買三瓶生命藥水(小)",
+		"amount" : 3,
+		"needItem" : "生命藥水(小)",
+		"reward" : 750,
+		"rewardItem" : "金錢"
+	},
+
+	"2" : 
+	{
+    "title" : "藥材研究",
+    "content" : "收集八個毒刺給煉藥師",
+    "amount" : 8,
+    "needItem" : "毒刺",
+    "reward" : 450,
+		"rewardItem" : "金錢"
+	},
+	
+	"3" : 
+	{
+    "title" : "衣料收集",
+    "content" : "收集五個狼皮給裁縫商人",
+    "amount" : 5,
+    "needItem" : "狼皮",
+    "reward" : 800,
+		"rewardItem" : "金錢"
+	},
+
+	"4": {
+		"title": "蘑菇採集",
+		"content": "收集十個蘑菇",
+		"amount": 10,
+		"needItem": "蘑菇",
+		"reward": 300,
+		"rewardItem": "金錢"
+	},
+	
+	"5": {
+		"title": "魔法練成",
+		"content": "收集八個魔法之塵",
+		"amount": 5,
+		"needItem": "魔法之塵",
+		"reward": 500,
+		"rewardItem": "金錢"
+	},
+	
+	"6": {
+		"title": "取暖的方法",
+		"content": "收集十個巨熊毛皮",
+		"amount": 10,
+		"needItem": "巨熊毛皮",
+		"reward": 400,
+		"rewardItem": "金錢"
+	}
+	
+}
