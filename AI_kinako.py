@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 import google.generativeai as gemini
 
 api_key = "AIzaSyDPmuDwgNK9sp3DiYyW9f6cvSoZwu5SfDE"
@@ -47,14 +48,10 @@ def ask_ai(content, user_id):
 		return "角色已切換"
 
 	# **2️⃣ 發送訊息並獲取回應**
-	response = chat.send_message(
-		content,
-		generation_config=gemini.types.GenerationConfig(
-			candidate_count=1,
-			max_output_tokens=2000,
-			temperature=0.2
-		)
-	)
+	if "現在幾點" in content or "現在時間" in content:
+		content = f"當前時間 {datetime.now()}，告訴我現在幾點，只要說到幾點幾分就好(無條件捨去)"
+
+	response = get_response(content, chat)
 
 	# **3️⃣ 儲存對話紀錄**
 	data.append({"parts": [{"text": content}], "role": "user"})
@@ -66,6 +63,19 @@ def ask_ai(content, user_id):
 			json.dump(data, file, indent=4, ensure_ascii=False)
 
 	return response.text
+
+def get_response(content, chat):
+	# **2️⃣ 發送訊息並獲取回應**
+	response = chat.send_message(
+		content,
+		generation_config=gemini.types.GenerationConfig(
+			candidate_count=1,
+			max_output_tokens=2000,
+			temperature=0.2
+		)
+	)
+
+	return response
 
 def reset_history(user_id):
 	"""清空指定使用者的歷史記錄"""

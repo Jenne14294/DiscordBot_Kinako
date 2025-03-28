@@ -1,17 +1,14 @@
 import scrapetube
 import json
 import discord
-import lyricsgenius
 import yt_dlp
 import os 
 import random
 import requests
 import math
 import AI_title
-import AI_kinako
 import dbFunction
 import datetime
-import time
 
 from discord.ext import commands, tasks
 from discord.utils import get
@@ -24,7 +21,6 @@ from cmds.economy import register, reload_db
 
 temp_deleted = "./deleted_files"
 temp_edited = "./edited_files"
-
 dpath = "./jsonfile/data.json"
 
 
@@ -103,14 +99,19 @@ class MusicFunction:
 		return title
 	
 	def get_lyrics(self, title):
-		genius = lyricsgenius.Genius("7DQAwn4mmSqLR3PEnFGTQY0-NircnwyiOzLdKsKzFjtdzi1JqG0Lk_FH_Kc_pGLj")
+		client_access_token = "aW0PCZtUaF6ol8tBEFw6iAQ0dYakXRLpb_1nYzoOJBnAIbzctmdBK7c3IvcvE5Hs"
+		url = f"http://api.genius.com/search?q={title}&access_token={client_access_token}"
 
-		song = genius.search_song(title)
+		try:
+			response = requests.get(url)
+			json_data = response.json()
 
-		if song != None:
-			return song.url
-		
-		return None
+			song = json_data['response']['hits'][0]['result']['relationships_index_url']
+			return song
+		except Exception as e:
+			print(e)
+			return None
+
 	
 	def check_permission(self, interaction):
 		if not interaction.user.voice:
@@ -172,6 +173,8 @@ class MusicFunction:
 				statusText = f"**{interaction.user.name}** 無法暫停/播放此音樂"
 
 			else:
+				status = "一般播放" if data["loop"] == 0 else "循環播放"
+
 				if data["pause"] == 0:
 					voice.pause()
 					data["pause"] = 1
@@ -182,7 +185,6 @@ class MusicFunction:
 					voice.resume()
 					data["pause"] = 0
 					statusText = f"音樂已被 **{interaction.user.name}** 繼續播放"
-					status = "一般播放" if data["loop"] == 0 else "循環播放"
 
 			dict = text.embeds[0].to_dict()
 			dict['fields'][-1]['value'] = statusText
@@ -298,6 +300,8 @@ class MusicFunction:
 				statusText = f"**{interaction.user.name}** 無法循環播放此音樂"
 
 			else:
+				status = "一般播放" if data["loop"] == 0 else "循環播放"
+
 				if data["loop"] == 0:
 					data["loop"] = 1
 					statusText = f"音樂已被 **{interaction.user.name}** 循環播放"
@@ -306,7 +310,6 @@ class MusicFunction:
 				else:
 					data["loop"] = 0
 					statusText = f"音樂已被 **{interaction.user.name}** 普通播放"
-					status = "一般播放" if data["loop"] == 0 else "循環播放"
 
 				with open(path, "w", encoding="utf8") as file:
 					json.dump(data, file, indent=4, ensure_ascii=False)
@@ -369,7 +372,7 @@ class MusicFunction:
 			with open(path, "r", encoding="utf8") as file:
 				data = json.load(file)
 
-			title = AI_title.ask_ai(f"{MusicFunction.get_title(self, data['nowurl'])} 給我這首歌的歌名")
+			title = AI_title.ask_ai(f"{MusicFunction.get_title(self, data['nowurl'])}\n給我這首歌的歌名，只要歌名就好")
 			lyrics_url = MusicFunction.get_lyrics(self, title)
 			statusText = f"歌詞網址：{lyrics_url}\n**此功能正在測試中，可能會有些許錯誤**" if lyrics_url != None else "找不到歌詞!"
 

@@ -12,7 +12,7 @@ def ask_ai(content):
 		generation_config = gemini.types.GenerationConfig(
 			candidate_count = 1,
 			max_output_tokens = 2000,
-			temperature=0.7
+			temperature=0.2
 			)
 		)
 	

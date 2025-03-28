@@ -56,14 +56,18 @@ def get_title(url):
 	return title
 
 def get_lyrics(title):
-	genius = lyricsgenius.Genius("7DQAwn4mmSqLR3PEnFGTQY0-NircnwyiOzLdKsKzFjtdzi1JqG0Lk_FH_Kc_pGLj")
+	client_access_token = "aW0PCZtUaF6ol8tBEFw6iAQ0dYakXRLpb_1nYzoOJBnAIbzctmdBK7c3IvcvE5Hs"
+	url = f"http://api.genius.com/search?q={title}&access_token={client_access_token}"
 
-	song = genius.search_song(title)
+	try:
+		response = requests.get(url)
+		json_data = response.json()
 
-	if song != None:
-		return song.url
-		
-	return None
+		song = json_data['response']['hits'][0]['result']['relationships_index_url']
+		return song
+	except Exception as e:
+		print(e)
+		return None
 
 class QueueFunction:
 		class QueueInfo:
@@ -586,7 +590,7 @@ class Audio(commands.Cog):
 		with open(path, "r", encoding="utf8") as file:
 			data = json.load(file)
 
-		title = AI_title.ask_ai(f"{get_title(data['nowurl'])} 給我這首歌的歌名")
+		title = AI_title.ask_ai(f"{get_title(data['nowurl'])}\n給我這首歌的歌名，只要歌名就好").replace("\n", "")
 
 		lyrics = get_lyrics(title)
 		statusText = f"{title} 的歌詞網址：{lyrics}\n**此功能尚在測試，可能有些許錯誤**" if lyrics != None else "找不到歌詞"
