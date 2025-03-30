@@ -1,13 +1,16 @@
 import os
 import json
+
 from datetime import datetime
-import google.generativeai as gemini
+from google.genai.types import Tool, GenerateContentConfig, GoogleSearch
+from google import genai
 
 api_key = "AIzaSyDPmuDwgNK9sp3DiYyW9f6cvSoZwu5SfDE"
-gemini.configure(api_key=api_key)
-model = gemini.GenerativeModel('gemini-1.5-flash')
+client = genai.Client(api_key=api_key)  # 使用 Client 來配置 API 金鑰
 
 character = "kinako"  # 預設角色
+time_keyword = ["現在幾點", "現在時間"]
+weather_keyword = ["天氣", "氣候", "氣溫"]
 
 def ask_ai(content, user_id):
 	global character
@@ -25,7 +28,7 @@ def ask_ai(content, user_id):
 		data = restore_data()
 
 	# 重新建立 chat 物件，確保是該使用者的對話
-	chat = model.start_chat(history=data)
+	chat = client.chats.create(model="gemini-2.0-flash", history=data)
 
 	if content in ['clear', '清除']:
 		os.remove(history_path)
@@ -48,8 +51,11 @@ def ask_ai(content, user_id):
 		return "角色已切換"
 
 	# **2️⃣ 發送訊息並獲取回應**
-	if "現在幾點" in content or "現在時間" in content:
-		content = f"當前時間 {datetime.now()}，告訴我現在幾點，只要說到幾點幾分就好(無條件捨去)"
+	if any(keyword in content for keyword in time_keyword):
+		content = get_search(content)
+
+	elif any(keyword in content for keyword in weather_keyword):
+		content = get_search(content)
 
 	response = get_response(content, chat)
 
@@ -65,16 +71,7 @@ def ask_ai(content, user_id):
 	return response.text
 
 def get_response(content, chat):
-	# **2️⃣ 發送訊息並獲取回應**
-	response = chat.send_message(
-		content,
-		generation_config=gemini.types.GenerationConfig(
-			candidate_count=1,
-			max_output_tokens=2000,
-			temperature=0.2
-		)
-	)
-
+	response = chat.send_message(content)
 	return response
 
 def reset_history(user_id):
@@ -103,16 +100,8 @@ def load_character(character):
 
 def get_character_response(character_data):
 	"""根據角色資料產生開場白回應"""
-	chat = model.start_chat(history=[])
-
-	response = chat.send_message(
-		character_data, 
-		generation_config=gemini.types.GenerationConfig(
-			candidate_count=1,
-			max_output_tokens=2000,
-			temperature=0.7
-		)
-	)
+	chat = client.chats.create(model="gemini-2.0-flash", history=[])
+	response = chat.send_message(character_data)
 	
 	return response.text
 
@@ -168,3 +157,21 @@ def set_rules():
 		data = file.read()
 
 	return data
+
+def get_search(question):
+	# 設定 Google 搜索工具
+	google_search_tool = Tool(
+	google_search = GoogleSearch()
+	)
+
+	response = client.models.generate_content(
+		model="gemini-2.0-flash",
+		contents=question,
+		config=GenerateContentConfig(
+			tools=[google_search_tool],
+			response_modalities=["TEXT"],
+		)
+	)
+	
+	# 返回回應文本
+	return response.text  # 假設回應結果是純文本
