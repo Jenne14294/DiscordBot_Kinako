@@ -4,6 +4,7 @@ import os
 import random
 import importlib
 import AI_kinako
+import discord
 
 from datetime import datetime
 from discord.ext import commands
@@ -15,6 +16,20 @@ default_guild_setting = "./guild_settings/template.json"
 
 def reload_ai():
 	importlib.reload(AI_kinako)
+
+class AI_HelpMenu:
+	def __init__(self):
+		self.embed = discord.Embed(title="黃名子",description="所有權為 <@493411441832099861> 所有\n★為傑尼才可使用",color=0x3d993a)
+		self.embed.add_field(name="**show(顯示)**", value="顯示可切換的角色", inline=True)
+		self.embed.add_field(name="**list(紀錄)**",value="顯示可恢復的存檔",inline=True)
+		self.embed.add_field(name="**clear(清除)**", value="清除當前的歷史紀錄", inline=True)
+		self.embed.add_field(name="**restore(恢復) [檔案名稱]**", value="讀取指定的紀錄檔案", inline=True)
+		self.embed.add_field(name="**export(導出) [名稱]**",value="儲存當前的歷史紀錄",inline=True)
+		self.embed.add_field(name="**switch(切換) [角色ID]**", value="切換到指定的角色", inline=True)
+		self.embed.add_field(name="**★reload**",value="重新載入 AI 功能",inline=True)
+
+	def to_dict(self):
+		return self.embed.to_dict()
 
 class Event(commands.Cog):
 	def __init__(self,bot):
@@ -97,15 +112,22 @@ class Event(commands.Cog):
 					await msg.channel.send(random.choice(data["play_message"]))
 					return
 
-				if msg.content.startswith("<@808341883981791242>"):
+				if self.bot.user in msg.mentions:
 					try:
-						input_text = msg.content.split(" ", 1)
-						if input_text[1] == "reload" and user.id in [493411441832099861, 660099488228311050]:
-							await msg.channel.send("AI功能已重新載入")
+						if msg.content.startswith("<@808341883981791242>"):
+							input_text = msg.content.split(" ", 1)
+							query = input_text[1]
+						else:
+							query = msg.content
+
+						print(query)
+
+						if query == "reload" and user.id in [493411441832099861, 660099488228311050]:
+							await msg.reply("AI功能已重新載入")
 							reload_ai()
 							return
 						
-						if input_text[1] in ['show', '顯示']:
+						if query in ['show', '顯示']:
 							files = os.listdir("./AI_functions/characters")
 							characters = ""
 							for file in files:
@@ -113,10 +135,40 @@ class Event(commands.Cog):
 									characters = characters + " " + file[:-3] + " &"
 
 							characters = characters[:-1]
-							await msg.channel.send(f"可用角色：{characters}")
+
+							if characters != "":
+								await msg.reply(f"可用角色：{characters}")
+
+							else:
+								await msg.reply("沒有可用的角色")
+
 							return
 						
-						response = AI_kinako.ask_ai(input_text[1], user.id)
+						if query in ['list', "紀錄"]:
+							files = os.listdir("./AI_functions/output_data")
+							sorted_files = sorted(files, key=lambda x: int(x.split("_")[0]))
+							data = ""
+							for file in sorted_files:
+								data = data + " " + file[:-5] + " &"
+
+							data = data[:-1]
+
+							if data != "":
+								await msg.reply(f"可用紀錄：{data}")
+
+							else:
+								await msg.reply("沒有可用的紀錄")
+
+							return
+						
+						if query in ['help', '功能']:
+							embed = AI_HelpMenu()
+							await msg.reply(embed=embed)
+							return
+						
+						# image = msg.attachments[0].url if msg.attachments else None
+						image = None
+						response = AI_kinako.ask_ai(query, image, user.id)
 
 						await msg.channel.send(response)
 					except Exception as e:
