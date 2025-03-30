@@ -120,8 +120,6 @@ class Event(commands.Cog):
 						else:
 							query = msg.content
 
-						print(query)
-
 						if query == "reload" and user.id in [493411441832099861, 660099488228311050]:
 							await msg.reply("AI功能已重新載入")
 							reload_ai()
