@@ -81,10 +81,10 @@ def ask_ai(content, image, user_id):
 
 	# **2️⃣ 發送訊息並獲取回應**
 	if any(keyword in content for keyword in time_keyword):
-		content = get_search(content) + "請假裝我沒有提供時間，並利用這個資訊告訴我現在幾點，要保持原有的角色性格"
+		content = get_search(content) + "請假裝我沒有提供時間，並利用這個資訊告訴我時間資訊，要保持原有的所有規則"
 
 	elif any(keyword in content for keyword in weather_keyword):
-		content = get_search(content) + "請假裝我沒有提供天氣，並利用這個資訊告訴我天氣資訊，要保持原有的角色性格"
+		content = get_search(content) + "請假裝我沒有提供天氣，並利用這個資訊告訴我天氣資訊，要保持原有的所有規則"
 
 	# if image:
 	# 	content = get_picture_response(image)

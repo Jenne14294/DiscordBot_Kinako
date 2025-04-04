@@ -168,10 +168,10 @@ class Event(commands.Cog):
 						image = None
 						response = AI_kinako.ask_ai(query, image, user.id)
 
-						await msg.channel.send(response)
+						await msg.reply(response)
 					except Exception as e:
 						print(e)
-						await msg.channel.send("人家不太懂你的意思呢 (｡•́︿•̀｡)")
+						await msg.reply("人家不太懂你的意思呢 (｡•́︿•̀｡)")
 
 					return
 

@@ -321,6 +321,9 @@ class Audio(commands.Cog):
 				
 				title = result['title']
 				WEBSITE = f"https://www.youtube.com{result['url_suffix']}"
+
+				if len(WEBSITE) >= 100:
+					continue
 					
 				music = Button(label= str(number),style=discord.ButtonStyle.primary,custom_id=WEBSITE)
 				music.callback = choose_video
