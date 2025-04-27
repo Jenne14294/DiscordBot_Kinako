@@ -76,8 +76,10 @@ def ask_ai(content, image, user_id):
 		contents = content.split(" ", 1)
 		character = contents[1]
 		# 切換角色
-		switch_character(character, user_id)
-		return "角色已切換"
+		if switch_character(character, user_id):
+			return "角色已切換"
+		else:
+			return "切換失敗"
 
 	# **2️⃣ 發送訊息並獲取回應**
 	if any(keyword in content for keyword in time_keyword):
@@ -143,16 +145,13 @@ def reset_history(user_id):
 
 def load_character(character):
 	"""載入角色資料"""
-	default_file = "./AI_functions/characters/kinako.md"
-	character_file = f"./AI_functions/characters/{character}.md" if character else default_file
-
-	# 如果角色檔案不存在，就改用預設檔案
-	history_file = character_file if os.path.exists(character_file) else default_file
+	character_file = f"./AI_functions/characters/{character}.md"
+	history_file = character_file
 
 	# 檢查是否確實有可用的角色檔案，避免讀取錯誤
 	if not os.path.exists(history_file):
-		raise FileNotFoundError(f"角色檔案不存在: {history_file}")
-
+		return None
+		
 	# 讀取檔案內容
 	with open(history_file, "r", encoding="utf8") as file:
 		character_data = file.read()
@@ -172,9 +171,12 @@ def switch_character(character, user_id):
 	"""切換角色並清空使用者歷史紀錄"""
 	history_path = f"./AI_functions/histories/history_{user_id}.json"
 	
-	# 讀取新角色資料
-	new_character_data = load_character(character)  # 假設此時是想換成 'kinako'，可根據需求變動角色
+	# 讀取新角色資料3
 	new_character_rule = set_rules()
+	new_character_data = load_character(character)  # 假設此時是想換成 'kinako'，可根據需求變動角色
+
+	if not new_character_data:
+		return False
 	
 	# 清空歷史紀錄並將新角色資料寫入
 	reset_history(user_id)
@@ -192,7 +194,7 @@ def switch_character(character, user_id):
 	with open(history_path, "w", encoding="utf8") as file:
 		json.dump(data, file, indent=4, ensure_ascii=False)
 
-	return data
+	return True
 
 
 def restore_data(data):
@@ -203,7 +205,7 @@ def restore_data(data):
 	return data
 
 def set_rules():
-	rule_path = f"./Ai_functions/characters/rules.md"
+	rule_path = f"./AI_functions/characters/rules.md"
 
 	with open(rule_path, "r", encoding="utf8") as file:
 		data = file.read()

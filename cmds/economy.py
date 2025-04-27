@@ -185,7 +185,7 @@ class WalletFunction:
 			data = dbFunction.get_economy(ID)
 			embed = WalletFunction.EconomyInfo(interaction.user, data)
 			view = WalletFunction.BankFunction()
-			await interaction.edit_original_response(embed=embed, view=view)
+			await interaction.edit_original_response(embed=embed, view=view) # pyright: ignore[reportArgumentType]
 			return
 		
 	class ClaimInput(Modal, title="請輸入要取出的金額"):
@@ -212,7 +212,7 @@ class WalletFunction:
 			data = dbFunction.get_economy(ID)
 			embed = WalletFunction.EconomyInfo(interaction.user, data)
 			view = WalletFunction.BankFunction()
-			await interaction.edit_original_response(embed=embed, view=view)
+			await interaction.edit_original_response(embed=embed, view=view) # pyright: ignore[reportArgumentType]
 			return
 
 class Economy(commands.Cog):
@@ -238,7 +238,7 @@ class Economy(commands.Cog):
 		
 		embed = WalletFunction.EconomyInfo(user, data)
 		view = WalletFunction.BankFunction()
-		await interaction.response.send_message(embed=embed, view=view)
+		await interaction.response.send_message(embed=embed, view=view) # pyright: ignore[reportArgumentType]
 			
 			
 	@app_commands.command(name="money",description="查詢錢包")
@@ -260,7 +260,7 @@ class Economy(commands.Cog):
 		
 		embed = WalletFunction.EconomyInfo(user, data)
 		view = WalletFunction.BankFunction()
-		await interaction.response.send_message(embed=embed, view=view)
+		await interaction.response.send_message(embed=embed, view=view) # pyright: ignore[reportArgumentType]
 		
 
 	

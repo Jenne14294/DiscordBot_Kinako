@@ -5,6 +5,12 @@ import json
 
 #從插件導入模組
 from discord.ext import commands
+from dotenv import load_dotenv
+
+load_dotenv()  # 載入 .env 檔
+
+api_key = os.getenv("bot_token")
+
 
 #機器人元件
 intent = discord.Intents.all()
@@ -34,7 +40,5 @@ async def on_ready():
 async def sync(ctx):
 	await bot.tree.sync()
 	await ctx.send('指令已同步!')
-	
 
-
-bot.run(data["token"])
+bot.run(api_key) # pyright: ignore[reportArgumentType]

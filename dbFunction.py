@@ -142,7 +142,146 @@ def DQ_refresh(quests, id):
 	conn.commit()
 	return
 
+def GTN_set(id, data):
+	number = data[0]
+	top = data[1]
+	chance = data[2]
+	multiply = data[3]
+
+	sql = "UPDATE `gtngame` SET `chance`= %s, `multiply`= %s, `GuessTop` = %s, `GuessBottom` = 0, `GuessNumber`= %s WHERE Id = %s"
+	param = (chance, multiply, top, number, id,)
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def GTN_get(id):
+	sql = "SELECT * FROM `gtngame` WHERE Id = %s;"
+	param = (id, )
+
+	cursor.execute(sql, param)
+	return cursor.fetchone()
+
+def GTN_greater(id, number):
+	sql = "UPDATE `gtngame` SET `chance`= `chance` - 1, `GuessTop` = %s WHERE Id = %s"
+	param = (number, id, )
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def GTN_less(id, number):
+	sql = "UPDATE `gtngame` SET `chance`= `chance` - 1, `GuessBottom` = %s WHERE Id = %s"
+	param = (number, id, )
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
 def GTN_gain(id, money):
+	sql = "update `economy` set `money` = `money` + %s where Id = %s"
+	param = (money, id, )
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def TTT_init(id):
+	for i in range(1, 10):
+		sql = f"UPDATE `tttgame` SET `slot_{i}`= %s WHERE Id = %s"
+		param = ("⬛", id,)
+		cursor.execute(sql, param)
+
+	sql = "UPDATE `tttgame` SET `Round`= 4 WHERE Id = %s"
+	param = (id,)
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def TTT_getslot(id):
+	sql = "SELECT `slot_1`, `slot_2`, `slot_3`, `slot_4`, `slot_5`, `slot_6`, `slot_7`, `slot_8`, `slot_9` FROM `tttgame` WHERE Id = %s;"
+	param = (id, )
+
+	cursor.execute(sql, param)
+	return cursor.fetchone()
+
+def TTT_getRound(id):
+	sql = "SELECT `Round` FROM `tttgame` WHERE Id = %s;"
+	param = (id, )
+
+	cursor.execute(sql, param)
+	return cursor.fetchone()
+
+def TTT_select(id, num_p, num_c):
+	sql = f"UPDATE `tttgame` SET `slot_{num_p}` = '⭕' WHERE Id = %s"
+	param = (id,)
+	cursor.execute(sql, param)
+
+	sql = f"UPDATE `tttgame` SET `slot_{num_c}` = '❌' WHERE Id = %s"
+	param = (id,)
+	cursor.execute(sql, param)
+
+	sql = f"UPDATE `tttgame` SET `Round` = `Round` - 1 WHERE Id = %s"
+	param = (id,)
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def TTT_gain(id):
+	sql = "update `economy` set `money` = `money` + 100 where Id = %s"
+	param = (id, )
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def Slot_gain(id, money):
+	sql = "update `economy` set `money` = `money` + %s where Id = %s"
+	param = (money, id, )
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def PP_start(id, money):
+	sql = "update `economy` set `money` = `money` - %s where Id = %s"
+	param = (money, id, )
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def PP_init(id, money, pp_slots):
+	sql = "UPDATE `ppgame` SET `chance`= 3,`input_money`= %s,`select_1`= -1,`select_2`= -1,`select_3`= -1 WHERE Id = %s"
+	param = (money, id, )
+	cursor.execute(sql, param)
+
+	for i in range(1, 26):
+		sql = f"UPDATE `ppgame` SET `hole_{i}`= %s WHERE Id = %s"
+		param = (pp_slots[i - 1], id)
+		cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def PP_getslot(id):
+	sql = "SELECT * FROM `ppgame` WHERE Id = %s;"
+	param = (id, )
+
+	cursor.execute(sql, param)
+	return cursor.fetchone()
+
+def PP_select(id, hole, time):
+	sql = f"UPDATE `ppgame` SET `select_{time}`= %s, `chance` = `chance` - 1 WHERE Id = %s"
+	param = (hole, id,)
+	cursor.execute(sql, param)
+
+	conn.commit()
+	return
+
+def PP_gain(id, money):
 	sql = "update `economy` set `money` = `money` + %s where Id = %s"
 	param = (money, id, )
 	cursor.execute(sql, param)

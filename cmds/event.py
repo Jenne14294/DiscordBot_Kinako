@@ -81,8 +81,7 @@ class Event(commands.Cog):
 	async def on_message(self, msg):
 		user = msg.author
 		try:
-			if user != self.bot.user:
-
+			if not user.bot:
 				num = random.randint(1, 25) 
 				emoji_list = [f"<:{emoji.name}:{emoji.id}>" for guild in self.bot.guilds for emoji in guild.emojis] 
 				if num == 9 and not msg.author.bot: 
