@@ -74,8 +74,9 @@ class GTN:
 			while chance > 0:
 				response = await self.bot.wait_for("message")
 
-				if response.author.bot:
+				if response.author.bot or response.author.id != int(game_data["Id"]):
 					continue
+
 
 				try:
 					guess = int(response.content)
