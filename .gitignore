@@ -2,3 +2,5 @@ __pycache__/
 AI_functions/histories/
 .env
 AI_functions/
+deleted_files/
+edited_files/
