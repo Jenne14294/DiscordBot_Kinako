@@ -1,9 +1,7 @@
 import discord
-import yt_dlp
 import json
 import os
 import math
-import lyricsgenius
 import requests
 import random
 import importlib
@@ -13,8 +11,8 @@ from pytube import Playlist
 from discord.ext import commands
 from discord.ui import Button, View, TextInput, Modal
 from discord import app_commands
-from youtube_search import YoutubeSearch
 from bs4 import BeautifulSoup
+from yt_dlp import YoutubeDL
 
 YDL_OPTIONS = {
 				"format": "bestaudio/best",
@@ -313,24 +311,26 @@ class Audio(commands.Cog):
 		else:
 			embed = discord.Embed(title="搜尋列表",description="** **")
 			view = View(timeout=None)
-			results = YoutubeSearch(搜尋, max_results=5).to_dict()
+			ydl_opts = {
+				'quiet': True,
+				'extract_flat': 'in_playlist',
+				'force_generic_extractor': True,
+			}
+			
+			with YoutubeDL(ydl_opts) as ydl:
+				search_query = f"ytsearch5:{搜尋}"  # 搜尋前 5 筆
+				results = ydl.extract_info(search_query, download=False)
 
-			number = 1
-
-			for result in results:
-				
-				title = result['title']
-				WEBSITE = f"https://www.youtube.com{result['url_suffix']}"
-
-				if len(WEBSITE) >= 100:
-					continue
+			entries = results.get('entries', [results])
+			for i, entry in enumerate(entries):
+				video_url = f"https://www.youtube.com/watch?v={entry['id']}" if 'id' in entry else entry['url']
+				title = entry.get('title', video_url)
 					
-				music = Button(label= str(number),style=discord.ButtonStyle.primary,custom_id=WEBSITE)
+				music = Button(label= str(i + 1),style=discord.ButtonStyle.primary,custom_id=video_url)
 				music.callback = choose_video
 				view.add_item(music)
 
-				embed.add_field(name=f"{number} . {title}",value=" ",inline=False)
-				number += 1
+				embed.add_field(name=f"{i + 1} . {title}",value=" ",inline=False)
 
 			await interaction.edit_original_response(content=None,embed=embed,view=view)
 
@@ -360,7 +360,7 @@ class Audio(commands.Cog):
 			player = data["nowplayer"]
 			volume = data["volume"]
 
-			with yt_dlp.YoutubeDL(YDL_OPTIONS) as ydl:
+			with YoutubeDL(YDL_OPTIONS) as ydl:
 				info = ydl.extract_info(url, download=False)
 
 			THUMBNAIL = info['thumbnail']

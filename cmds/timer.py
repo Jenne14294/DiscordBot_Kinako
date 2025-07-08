@@ -1,7 +1,6 @@
 import scrapetube
 import json
 import discord
-import yt_dlp
 import os 
 import random
 import requests
@@ -15,9 +14,10 @@ from discord.utils import get
 from discord.ui import Button, Modal, TextInput, View, Select
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
 from pytube import Playlist
-from youtube_search import YoutubeSearch
+from yt_dlp import YoutubeDL
 from bs4 import BeautifulSoup
 from cmds.economy import register, reload_db
+
 
 temp_deleted = "./deleted_files"
 temp_edited = "./edited_files"
@@ -83,7 +83,7 @@ class MusicFunction:
 	ffmpeg = "C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe"
 
 	def show_information(self, url):
-		with yt_dlp.YoutubeDL(MusicFunction.YDL_OPTIONS) as ydl:
+		with YoutubeDL(MusicFunction.YDL_OPTIONS) as ydl:
 			info = ydl.extract_info(url, download=False)
 					
 		return info
@@ -563,25 +563,26 @@ class MusicFunction:
 			else:
 				embed = discord.Embed(title="搜尋列表",description="** **")
 				view = View(timeout=None)
-				results = YoutubeSearch(search, max_results=5).to_dict()
+				ydl_opts = {
+					'quiet': True,
+					'extract_flat': 'in_playlist',
+					'force_generic_extractor': True,
+				}
+				
+				with YoutubeDL(ydl_opts) as ydl:
+					search_query = f"ytsearch5:{search}"  # 搜尋前 5 筆
+					results = ydl.extract_info(search_query, download=False)
 
-				number = 1
-
-				for result in results:
-					
-					title = result['title']
-					WEBSITE = f"https://www.youtube.com{result['url_suffix']}"
+				entries = results.get('entries', [results])
+				for i, entry in enumerate(entries):
+					video_url = f"https://www.youtube.com/watch?v={entry['id']}" if 'id' in entry else entry['url']
+					title = entry.get('title', video_url)
 						
-					music = Button(label= str(number),style=discord.ButtonStyle.primary,custom_id=WEBSITE)
+					music = Button(label= str(i + 1),style=discord.ButtonStyle.primary,custom_id=video_url)
 					music.callback = choose_video
 					view.add_item(music)
 
-					embed.add_field(name=f"{number} . {title}",value=" ",inline=False)
-					number += 1
-
-				back = Button(label="返回", style=discord.ButtonStyle.secondary, custom_id="back")
-				back.callback = cancel_choose
-				view.add_item(back)
+					embed.add_field(name=f"{i + 1} . {title}",value=" ",inline=False)
 
 				await interaction.edit_original_response(content=None,embed=embed,view=view)
 

@@ -1,19 +1,24 @@
 import json
 import mysql.connector
+from dotenv import load_dotenv
+import os
+
+# 載入 .env 檔案中的變數
+load_dotenv()
 
 try:
 	conn = mysql.connector.connect(
-		user = "root", 
-		password = "", 
-		host = "localhost", 
-		port = 3306, 
-		database = "discordbot"
+		user = os.getenv("DB_USER"),
+		password = os.getenv("DB_PASSWORD"),
+		host = os.getenv("DB_HOST"),
+		port = int(os.getenv("DB_PORT")),
+		database = os.getenv("DB_NAME")
 	)
 	
-	cursor = conn.cursor(dictionary = True)
+	cursor = conn.cursor(dictionary=True)
 
 except mysql.connector.Error as e:
-	print("DB無法連線")
+	print("DB無法連線：", e)
 
 def register(user, data):
 	sql = "INSERT INTO `economy`(`Id`, `name`, `money`, `bank`, `daily`) VALUES (%s, %s, %s,%s, %s)"
