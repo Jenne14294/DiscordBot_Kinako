@@ -8,6 +8,8 @@ import math
 import AI_title
 import dbFunction
 import datetime
+import re
+import glob
 
 from discord.ext import commands, tasks
 from discord.utils import get
@@ -82,20 +84,78 @@ class MusicFunction:
 	
 	ffmpeg = "C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe"
 
-	def show_information(self, url):
-		with YoutubeDL(MusicFunction.YDL_OPTIONS) as ydl:
-			info = ydl.extract_info(url, download=False)
-					
-		return info
-	
-	def get_title(self, url):
-		r = requests.get(url)
-		soup = BeautifulSoup(r.text, features="html.parser")
+	def clean_tempfile(self):
+		# 刪除暫存檔
+		for f in glob.glob("temp.*"):
+			os.remove(f)
 
-		link = soup.find_all(name="title")[0]
-		title = str(link)
-		title = title.replace("<title>","")
-		title = title.replace("</title>","")
+	def show_information(self, url):
+		# 🔹 Bilibili
+		if "bilibili.com" in url:
+			bilibili_opts = {
+				'format': 'bestaudio/best',  # 取得最佳音訊格式
+				'quiet': True,
+				'noplaylist': True,
+				'outtmpl': 'temp.%(ext)s',   # 保留原始副檔名
+				'postprocessors': [],         # 不轉 mp3
+			}
+
+			self.clean_tempfile()
+
+			with YoutubeDL(bilibili_opts) as ydl:
+				info = ydl.extract_info(url, download=True)
+
+			# 強制命名為 temp.mp3
+			file_path = os.path.abspath(f"temp.{info['ext']}")
+
+			# 回傳整理後資訊
+			return {
+				"title": info.get("title", "未知標題"),
+				"thumbnail": info.get("thumbnail", None),
+				"duration": info.get("duration", 0),
+				"url": file_path
+			}
+
+		# 🔹 YouTube 或其他網站
+		else:
+			with YoutubeDL(MusicFunction.YDL_OPTIONS) as ydl:
+				info = ydl.extract_info(url, download=False)
+
+			return info
+	
+	def get_title(self,url: str) -> str:
+		headers = {
+			"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+						"AppleWebKit/537.36 (KHTML, like Gecko) "
+						"Chrome/118.0.0.0 Safari/537.36"
+		}
+
+		try:
+			r = requests.get(url, headers=headers, timeout=10)
+			r.raise_for_status()
+		except Exception as e:
+			return f"[錯誤] 無法連線: {e}"
+
+		html = r.text
+		title = "未知標題"
+
+		# YouTube 標題擷取
+		if "youtube.com" in url or "youtu.be" in url:
+			match = re.search(r'"title":"(.*?)"', html)
+			if match:
+				title = match.group(1).encode('utf-8').decode('unicode_escape')  # JSON escape 才 decode
+
+		# Bilibili 標題擷取
+		if "bilibili.com" in url:
+			# 直接抓 <title> 標籤或 JSON 內 title
+			match = re.search(r'<title>(.*?)</title>', html, re.S)
+			if match:
+				title = match.group(1).strip()
+			else:
+				# fallback: JSON 格式 title
+				match = re.search(r'"title":"(.*?)"', html)
+				if match:
+					title = match.group(1).encode('utf-8').decode('unicode_escape')
 
 		return title
 	
@@ -125,7 +185,6 @@ class MusicFunction:
 
 	class Information:
 		def __init__(self, data, info, statusText):
-
 			seconds = int(info["duration"] % 60)
 			minutes = (info["duration"] - seconds) // 60
 			status = "暫停播放" if data["pause"] == 1 else "一般播放" if data["pause"] == 0 and data["loop"] == 0 else "循環播放" if data["loop"] == 1 else ""
@@ -1143,6 +1202,7 @@ class Timer(commands.Cog):
 					await text.edit(content="語音頻道裡面沒有人，機器人已自動斷線", embed=None, view=None)
 		
 					os.remove(path)
+					MusicFunction.clean_tempfile()
 					await guild.voice_client.disconnect()
 					continue
 
@@ -1231,13 +1291,25 @@ class Timer(commands.Cog):
 				info = MusicFunction.show_information(self, url)
 				URL = info['url']
 
-				source = PCMVolumeTransformer(FFmpegPCMAudio(URL, **MusicFunction.FFMPEG_OPTIONS), data["volume"])
-				voice.play(source)
+				# 判斷是本地檔案還是網路 URL
+				if os.path.exists(URL):
+					# 本地檔案 → 不加 reconnect
+					source = PCMVolumeTransformer(FFmpegPCMAudio(URL), volume=data["volume"])
+				else:
+					# 網路串流 → 加 reconnect 選項
+					ffmpeg_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+					source = PCMVolumeTransformer(FFmpegPCMAudio(URL, options=ffmpeg_options), volume=data["volume"])
 
 				embed = MusicFunction.Information(data, info, "")
 				view = MusicFunction.MusicButton()
 
+				
+
 				await text.edit(content=None, embed=embed, view=view)
+
+				voice.play(source)
+
+				
 
 			except Exception as e:
 				#print(e)

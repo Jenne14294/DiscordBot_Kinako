@@ -6,6 +6,7 @@ import requests
 import random
 import importlib
 import AI_title
+import re
 
 from pytube import Playlist
 from discord.ext import commands
@@ -42,16 +43,41 @@ default_path = "./audio_files"
 def reload():
 	importlib.reload(AI_title)
 
-def get_title(url):
-	r = requests.get(url)
-	soup = BeautifulSoup(r.text, features="html.parser")
+def get_title(url: str) -> str:
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/118.0.0.0 Safari/537.36"
+    }
 
-	link = soup.find_all(name="title")[0]
-	title = str(link)
-	title = title.replace("<title>","")
-	title = title.replace("</title>","")
+    try:
+        r = requests.get(url, headers=headers, timeout=10)
+        r.raise_for_status()
+    except Exception as e:
+        return f"[錯誤] 無法連線: {e}"
 
-	return title
+    html = r.text
+    title = "未知標題"
+
+    # YouTube 標題擷取
+    if "youtube.com" in url or "youtu.be" in url:
+        match = re.search(r'"title":"(.*?)"', html)
+        if match:
+            title = match.group(1).encode('utf-8').decode('unicode_escape')  # JSON escape 才 decode
+
+    # Bilibili 標題擷取
+    if "bilibili.com" in url:
+        # 直接抓 <title> 標籤或 JSON 內 title
+        match = re.search(r'<title>(.*?)</title>', html, re.S)
+        if match:
+            title = match.group(1).strip()
+        else:
+            # fallback: JSON 格式 title
+            match = re.search(r'"title":"(.*?)"', html)
+            if match:
+                title = match.group(1).encode('utf-8').decode('unicode_escape')
+
+    return title
 
 def get_lyrics(title):
 	client_access_token = "aW0PCZtUaF6ol8tBEFw6iAQ0dYakXRLpb_1nYzoOJBnAIbzctmdBK7c3IvcvE5Hs"
@@ -244,9 +270,29 @@ class Audio(commands.Cog):
 			except:
 				url = item
 				
-				if "list" in url:
+				if "list" in url and "youtube" in url:
 					urlList = list(Playlist(url))
 					TITLE = Playlist(url).title
+					player_list = [interaction.user.name] * len(urlList)
+
+				elif "list" in url and "bilibili" in url:
+					# yt_dlp 選項
+					ydl_opts = {
+						'extract_flat': True,   # 只解析清單，不下載影片
+						'quiet': True,
+						'skip_download': True
+					}
+
+					with YoutubeDL(ydl_opts) as ydl:
+						info = ydl.extract_info(url, download=False)
+
+					# info['title'] 是播放清單標題
+					TITLE = info.get('title', '未知清單')
+
+					# 每個 entry 是清單裡的影片
+					urlList = [entry['url'] for entry in info.get('entries', [])]
+
+					# 建立對應使用者名稱的播放列表
 					player_list = [interaction.user.name] * len(urlList)
 					
 				else:
