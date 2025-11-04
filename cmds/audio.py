@@ -15,6 +15,11 @@ from discord import app_commands
 from bs4 import BeautifulSoup
 from yt_dlp import YoutubeDL
 
+def clean_tempfile():
+	# 刪除暫存檔
+	for f in glob.glob("./audio_files/temp_*"):
+		os.remove(f)
+
 YDL_OPTIONS = {
 				"format": "bestaudio/best",
 				"extractaudio": True,
@@ -684,6 +689,7 @@ class Audio(commands.Cog):
 		path = f"./audio_files/{interaction.guild.id}.json"
 		try:
 			os.remove(path)
+			clean_tempfile()
 			voice = interaction.guild.voice_client
 			await voice.disconnect()
 			await interaction.response.send_message("我已經離開了唷~")

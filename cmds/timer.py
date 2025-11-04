@@ -25,6 +25,10 @@ temp_deleted = "./deleted_files"
 temp_edited = "./edited_files"
 dpath = "./jsonfile/data.json"
 
+def clean_tempfile():
+	# 刪除暫存檔
+	for f in glob.glob("./audio_files/temp_*"):
+		os.remove(f)
 
 class VerifyFunction:
 	class ModalClass(Modal, title = "設定名稱"):
@@ -84,29 +88,27 @@ class MusicFunction:
 	
 	ffmpeg = "C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe"
 
-	def clean_tempfile(self):
-		# 刪除暫存檔
-		for f in glob.glob("temp.*"):
-			os.remove(f)
+	
 
-	def show_information(self, url):
+	def show_information(self, url, guild_id):
 		# 🔹 Bilibili
 		if "bilibili.com" in url:
 			bilibili_opts = {
 				'format': 'bestaudio/best',  # 取得最佳音訊格式
 				'quiet': True,
 				'noplaylist': True,
-				'outtmpl': 'temp.%(ext)s',   # 保留原始副檔名
+				'outtmpl': os.path.join("./audio_files", f"temp_{guild_id}.%(ext)s"),   # 以 guild.id 區分檔案
 				'postprocessors': [],         # 不轉 mp3
 			}
 
-			self.clean_tempfile()
+			clean_tempfile()
 
 			with YoutubeDL(bilibili_opts) as ydl:
 				info = ydl.extract_info(url, download=True)
 
-			# 強制命名為 temp.mp3
-			file_path = os.path.abspath(f"temp.{info['ext']}")
+			# 正確取得實際檔名
+			file_path = os.path.abspath(f"./audio_files/temp_{guild_id}.{info['ext']}")
+
 
 			# 回傳整理後資訊
 			return {
@@ -286,7 +288,7 @@ class MusicFunction:
 			if not permission:
 				return
 
-			path = f"./audio_files/{interaction.guild.id}.json"
+			path = f"./audio_files/{interaction.guild_id}.json"
 			with open(path, "r", encoding="utf8") as file:
 				data = json.load(file)
 
@@ -503,8 +505,9 @@ class MusicFunction:
 				return
 
 			await interaction.response.defer()
-			path = f"./audio_files/{interaction.guild.id}.json"
+			path = f"./audio_files/{interaction.guild_id}.json"
 			os.remove(path)
+			clean_tempfile()
 			voice = interaction.guild.voice_client
 			await voice.disconnect()
 			await interaction.edit_original_response(content=f"{interaction.user.mention} 我已經離開了唷~", embed=None, view=None)
@@ -528,7 +531,7 @@ class MusicFunction:
 
 		async def on_submit(self, interaction: discord.Interaction):
 			await interaction.response.defer()
-			path = f"./audio_files/{interaction.guild.id}.json"
+			path = f"./audio_files/{interaction.guild_id}.json"
 								
 			with open(path,"r",encoding="utf8") as file:
 				data = json.load(file)
@@ -539,11 +542,11 @@ class MusicFunction:
 			async def cancel_choose(interaction):
 				await interaction.response.defer()
 
-				path = f"./audio_files/{interaction.guild.id}.json"
+				path = f"./audio_files/{interaction.guild_id}.json"
 				with open(path,"r",encoding="utf8") as file:
 					data = json.load(file)
 
-				info = MusicFunction.show_information(self, data["nowurl"])
+				info = MusicFunction.show_information(self, data["nowurl"], interaction.guild_id)
 				statusText = "已取消選歌"
 
 				embed = MusicFunction.Information(data, info, statusText)
@@ -553,7 +556,7 @@ class MusicFunction:
 
 			async def choose_video(item:discord.Interaction):
 				urlList = []					
-				path = f"./audio_files/{interaction.guild.id}.json"
+				path = f"./audio_files/{interaction.guild_id}.json"
 								
 				with open(path,"r",encoding="utf8") as file:
 					data = json.load(file)
@@ -590,7 +593,7 @@ class MusicFunction:
 				with open(path,"w",encoding="utf8") as file:
 					json.dump(data,file,indent=4)
 
-				info = MusicFunction.show_information(self, data["nowurl"])
+				info = MusicFunction.show_information(self, data["nowurl"], interaction.guild_id)
 
 				embed = MusicFunction.Information(data, info, statusText)
 				view = MusicFunction.MusicButton()
@@ -653,7 +656,7 @@ class MusicFunction:
 			volume = int(self.volume.value)
 
 			if isinstance(volume, int):
-				path = f"./audio_files/{interaction.guild.id}.json"
+				path = f"./audio_files/{interaction.guild_id}.json"
 				with open(path,"r",encoding="utf8") as file:
 					data = json.load(file)
 
@@ -813,7 +816,7 @@ class MusicFunction:
 				with open(path, "r", encoding="utf8") as file:
 					data = json.load(file)
 
-				info = MusicFunction.show_information(self, data["nowurl"])
+				info = MusicFunction.show_information(self, data["nowurl"], interaction.guild_id)
 				embed = MusicFunction.Information(data, info, "")
 				view = MusicFunction.MusicButton()
 
@@ -1202,7 +1205,7 @@ class Timer(commands.Cog):
 					await text.edit(content="語音頻道裡面沒有人，機器人已自動斷線", embed=None, view=None)
 		
 					os.remove(path)
-					MusicFunction.clean_tempfile()
+					clean_tempfile()
 					await guild.voice_client.disconnect()
 					continue
 
@@ -1288,7 +1291,7 @@ class Timer(commands.Cog):
 				with open(path, "w", encoding="utf8") as file:
 					json.dump(data, file, indent=4, ensure_ascii=False)
 
-				info = MusicFunction.show_information(self, url)
+				info = MusicFunction.show_information(self, url, guild.id)
 				URL = info['url']
 
 				# 判斷是本地檔案還是網路 URL
@@ -1312,7 +1315,7 @@ class Timer(commands.Cog):
 				
 
 			except Exception as e:
-				#print(e)
+				# print(e)
 				pass
 
 		
