@@ -210,7 +210,7 @@ class Admin(commands.Cog):
 		app_commands.Choice(name="音樂設定(music_settings)",value=3),
 		app_commands.Choice(name="早安設定(greet_settings)",value=4),
 	])
-	@commands.has_permissions(administrator=True)
+	@app_commands.checks.has_permissions(administrator=True)
 	async def settings(self, interaction:discord.Interaction, 類別:app_commands.Choice[int]):
 		if 類別.value == 1:
 			modal = SettingFunction.join_settings()
@@ -230,7 +230,7 @@ class Admin(commands.Cog):
 		
 	
 	@app_commands.command(description="擷取最後五則被刪除的訊息")
-	@commands.has_permissions(view_audit_log=True)
+	@app_commands.checks.has_permissions(view_audit_log=True)
 	async def snipe(self, interaction:discord.Interaction):
 		path = f"./deleted_files/{interaction.guild.id}.json"
 
@@ -251,7 +251,7 @@ class Admin(commands.Cog):
 		await interaction.response.send_message(embed=embed, view=view)
 
 	@app_commands.command(description="擷取最後五則被編輯的訊息")
-	@commands.has_permissions(view_audit_log=True)
+	@app_commands.checks.has_permissions(view_audit_log=True)
 	async def history(self, interaction:discord.Interaction):
 		path = f"./edited_files/{interaction.guild.id}.json"
 
@@ -279,7 +279,7 @@ class Admin(commands.Cog):
 		app_commands.Choice(name="以字刪除",value=2),
 		app_commands.Choice(name="以用戶刪除",value=3),
 	])
-	@commands.has_permissions(manage_messages=True)
+	@app_commands.checks.has_permissions(manage_messages=True)
 	async def clear(self,interaction:discord.Interaction,數量:str,模式:app_commands.Choice[int],*,目標:str=None):
 		await interaction.response.send_message("正在刪除訊息...")
 		counter = 0
@@ -314,8 +314,12 @@ class Admin(commands.Cog):
 				await interaction.edit_original_response(content="請輸入要刪除的訊息關鍵目標")
 				return
 
-			if 目標.startswith("<@") and 目標.endswith(">"):
+			if isinstance(目標, discord.Member):
+				target = 目標.id
+			elif 目標.startswith("<@") and 目標.endswith(">"):
 				target = 目標[2:-1]
+			else:
+				target = 目標
 
 			async for message in channel.history(limit=9999):
 				if counter > int(數量):
@@ -334,7 +338,7 @@ class Admin(commands.Cog):
 		app_commands.Choice(name="預設踢除",value=1),
 		app_commands.Choice(name="尚未驗證",value=2),
 	])
-	@commands.has_permissions(kick_members=True)
+	@app_commands.checks.has_permissions(kick_members=True)
 	async def kick(self, interaction:discord.Interaction, 踢除模式:app_commands.Choice[int], 成員:discord.User=None, 原因:str=None):
 		if 踢除模式.value == 1:
 			if not 成員:
@@ -359,7 +363,7 @@ class Admin(commands.Cog):
 
 
 	@app_commands.command(description="封鎖某人")
-	@commands.has_permissions(ban_members=True)
+	@app_commands.checks.has_permissions(ban_members=True)
 	async def ban(self, interaction:discord.Interaction,成員:discord.User,原因:str=None):
 		if not 成員:
 			await interaction.response.send_message("踢出目標不能為空")

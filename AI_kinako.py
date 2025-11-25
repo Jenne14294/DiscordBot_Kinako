@@ -1,11 +1,13 @@
 import os
 import json
+from dotenv import load_dotenv
 
 from datetime import datetime
 from google.genai.types import Tool, GenerateContentConfig, GoogleSearch
 from google import genai
 
-api_key = "AIzaSyDPmuDwgNK9sp3DiYyW9f6cvSoZwu5SfDE"
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=api_key)  # 使用 Client 來配置 API 金鑰
 
 character = "kinako"  # 預設角色
