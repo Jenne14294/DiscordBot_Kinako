@@ -2,6 +2,7 @@ import discord
 import random
 import asyncio
 import json
+import dbFunction
 
 from discord.ext import commands
 from discord.ui import Button, View, TextInput, Modal
@@ -1326,18 +1327,15 @@ class hl(commands.Cog):
 		change.callback = self.change_map
 		data.callback = self.data_page
 
-		mapID = db[f'{interaction.user.id}'][1]['enemies']['mapID']
-		
+		map_data = dbFunction.get_HL_map(interaction.user.id)
 		embed = discord.Embed(title="聖魂傳奇",description=" ")
 
 		if interaction.data['custom_id'] == "run":
 			for i in range(1,6):
-				db[f'{interaction.user.id}'][1]['enemies'][f'enemy{i}']['name'] = "無"
-				db[f'{interaction.user.id}'][1]['enemies'][f'enemy{i}']['HP'] = 0
-				db[f'{interaction.user.id}'][1]['enemies'][f'enemy{i}']['MP'] = 0
-				db[f'{interaction.user.id}'][1]['enemies'][f'enemy{i}']['skills'] = []
+				dbFunction.clear_HL_enemy(i, interaction.user.id)
 				
-		if db[f'{interaction.user.id}'][1]['enemies']['mapID'] in ["0","6"]:
+		if map_data['mapID'] in [1,7]:
+			mapID = map_data['mapID']
 			for i in range(len(maps_data[f'{mapID}']['NPCs'])):
 				name = maps_data[f'{mapID}']['NPCs'][f'{i}']['name']
 				type = maps_data[f'{mapID}']['NPCs'][f'{i}']['type']
@@ -1350,22 +1348,17 @@ class hl(commands.Cog):
 				view.add_item(NPC)
 
 		else:
+				battle_data = dbFunction.get_HL_battle(interaction.user.id)
 				search = Button(label="探索四周",style=discord.ButtonStyle.primary,custom_id="search")
 				view.add_item(search)
 				search.callback = self.search_field
-			
-				embed.add_field(name="敵人一",value=f"名字：{db[f'{interaction.user.id}'][1]['enemies']['enemy1']['name']}\n生命值：{db[f'{interaction.user.id}'][1]['enemies']['enemy1']['HP']}\n魔力值：{db[f'{interaction.user.id}'][1]['enemies']['enemy1']['MP']}\n技能：{db[f'{interaction.user.id}'][1]['enemies']['enemy1']['skills']}",inline=True)
-				
-				embed.add_field(name="敵人二",value=f"名字：{db[f'{interaction.user.id}'][1]['enemies']['enemy2']['name']}\n生命值：{db[f'{interaction.user.id}'][1]['enemies']['enemy2']['HP']}\n魔力值：{db[f'{interaction.user.id}'][1]['enemies']['enemy2']['MP']}\n技能：{db[f'{interaction.user.id}'][1]['enemies']['enemy2']['skills']}",inline=True)
-				
-				embed.add_field(name="敵人三",value=f"名字：{db[f'{interaction.user.id}'][1]['enemies']['enemy3']['name']}\n生命值：{db[f'{interaction.user.id}'][1]['enemies']['enemy3']['HP']}\n魔力值：{db[f'{interaction.user.id}'][1]['enemies']['enemy3']['MP']}\n技能：{db[f'{interaction.user.id}'][1]['enemies']['enemy3']['skills']}",inline=True)
-				
-				embed.add_field(name="敵人四",value=f"名字：{db[f'{interaction.user.id}'][1]['enemies']['enemy4']['name']}\n生命值：{db[f'{interaction.user.id}'][1]['enemies']['enemy4']['HP']}\n魔力值：{db[f'{interaction.user.id}'][1]['enemies']['enemy4']['MP']}\n技能：{db[f'{interaction.user.id}'][1]['enemies']['enemy4']['skills']}",inline=True)
-				
-				embed.add_field(name="敵人五",value=f"名字：{db[f'{interaction.user.id}'][1]['enemies']['enemy5']['name']}\n生命值：{db[f'{interaction.user.id}'][1]['enemies']['enemy5']['HP']}\n魔力值：{db[f'{interaction.user.id}'][1]['enemies']['enemy5']['MP']}\n技能：{db[f'{interaction.user.id}'][1]['enemies']['enemy5']['skills']}",inline=True)
+
+				for i in range(1,6):
+					
+					embed.add_field(name=f"敵人 {i}",value=f"名字：{battle_data[f'enemy{i}']['name']}\n生命值：{battle_data['enemy1']['HP']}\n魔力值：{battle_data['enemy1']['MP']}\n技能：{battle_data['enemy1']['skills']}",inline=True)
 				
 		
-		embed.add_field(name=f"{interaction.user.name}",value=f"生命值：{db[f'{interaction.user.id}'][1]['status']['HP']} / {db[f'{interaction.user.id}'][1]['status']['maxHP']}\n魔力值：{db[f'{interaction.user.id}'][1]['status']['MP']} / {db[f'{interaction.user.id}'][1]['status']['maxMP']}\n當前地圖：{maps_data[f'{mapID}']['name']}",inline=False)
+		embed.add_field(name=f"{interaction.user.name}",value=f"生命值：{battle_data['HP']} / {battle_data['maxHP']}\n魔力值：{battle_data['MP']} / {battle_data['maxMP']}\n當前地圖：{maps_data[f'{mapID}']['name']}",inline=False)
 
 		embed.add_field(name="==========================================================",value=" ",inline=False)
 		embed.add_field(name="狀態訊息",value=" ",inline=False)
