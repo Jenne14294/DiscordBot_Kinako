@@ -308,7 +308,7 @@ def get_HL_battle(user_id):
 	return cursor.fetchone()
 
 def get_HL_map(user_id):
-	sql = "SELECT `mapID` FROM `hl_info` inner join `hl_map` on `hl_map`.MapID = `hl_info`.mapID WHERE Id = %s;"
+	sql = "SELECT `mapID` FROM `hl_info` inner join `hl_map` on `hl_map`.MapID = `hl_info`.mapID WHERE `hl_info`.Id = %s;"
 	param = (user_id, )
 
 	cursor.execute(sql, param)
