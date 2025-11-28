@@ -29,7 +29,6 @@ class HelpMenu:
 			self.embed.add_field(name="**■[ttt]**", value="遊玩[井字遊戲]", inline=True)
 			self.embed.add_field(name="**■[slot <金額>]**",value="遊玩[吃角子老虎機]",inline=True)
 			self.embed.add_field(name="**■[pp <金額>]**",value="遊玩[洞洞樂]",inline=True)
-			self.embed.add_field(name="**■[聖魂傳奇]**",value="遊玩[聖魂傳奇]",inline=True)
 
 		def to_dict(self):
 			return self.embed.to_dict()
