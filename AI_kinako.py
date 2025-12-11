@@ -9,6 +9,7 @@ from google import genai
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=api_key)  # 使用 Client 來配置 API 金鑰
+MODEL_NAME = "gemini-1.5-flash"
 
 character = "kinako"  # 預設角色
 time_keyword = ["現在幾點", "現在時間"]
@@ -28,9 +29,6 @@ def ask_ai(content, image, user_id):
 	else:
 		# 使用者的歷史紀錄不存在 -> 讀取角色資料
 		data = switch_character(character, user_id)
-
-	# 重新建立 chat 物件，確保是該使用者的對話
-	chat = client.chats.create(model="gemini-2.0-flash", history=data)
 
 	if content in ['clear', '清除']:
 		os.remove(history_path)
@@ -82,13 +80,20 @@ def ask_ai(content, image, user_id):
 			return "角色已切換"
 		else:
 			return "切換失敗"
+		
+	enable_search = any(k in content for k in time_keyword + weather_keyword)
+	tools_config = [GoogleSearch()] if enable_search else None
 
-	# **2️⃣ 發送訊息並獲取回應**
-	if any(keyword in content for keyword in time_keyword):
-		content = get_search(content) + "請假裝我沒有提供時間，並利用這個資訊告訴我時間資訊，要保持原有的所有規則"
-
-	elif any(keyword in content for keyword in weather_keyword):
-		content = get_search(content) + "請假裝我沒有提供天氣，並利用這個資訊告訴我天氣資訊，要保持原有的所有規則"
+	# 建立 Chat 物件時，直接把工具設定進去
+	# 這樣 AI 發現需要查資料時，會在「同一次對話」中自動完成，只消耗一次主要請求
+	chat = client.chats.create(
+		model=MODEL_NAME, # 強烈建議改用 1.5-flash 避免 quota 0 的問題
+		history=data,
+		config=GenerateContentConfig(
+			tools=tools_config, 
+			response_modalities=["TEXT"]
+		)
+	)
 
 	# if image:
 	# 	content = get_picture_response(image)
@@ -118,24 +123,6 @@ def get_response(content, chat):
 
 # 	return response.text
 
-def get_search(question):
-	# 設定 Google 搜索工具
-	google_search_tool = Tool(
-	google_search = GoogleSearch()
-	)
-
-	response = client.models.generate_content(
-		model="gemini-2.0-flash",
-		contents=question,
-		config=GenerateContentConfig(
-			tools=[google_search_tool],
-			response_modalities=["TEXT"],
-		)
-	)
-	
-	# 返回回應文本
-	return response.text  # 假設回應結果是純文本
-
 
 """使用者設定"""
 def reset_history(user_id):
@@ -163,7 +150,7 @@ def load_character(character):
 
 def get_character_response(character_data):
 	"""根據角色資料產生開場白回應"""
-	chat = client.chats.create(model="gemini-2.0-flash", history=[])
+	chat = client.chats.create(model=MODEL_NAME, history=[])
 	response = chat.send_message(character_data)
 	
 	return response.text
@@ -215,5 +202,5 @@ def set_rules():
 	return data
 
 def get_timestamp():
-    """獲取當前時間並格式化為 YYYY-MM-DD HH:MM:SS"""
-    return datetime.now().strftime("%Y%m%d%H%M%S")
+	"""獲取當前時間並格式化為 YYYY-MM-DD HH:MM:SS"""
+	return datetime.now().strftime("%Y%m%d%H%M%S")

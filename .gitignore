@@ -1,7 +1,7 @@
 __pycache__/
 AI_functions/histories/
+AI_functions/output_data/
 .env
-AI_functions/
 venv/
 deleted_files/
 edited_files/
