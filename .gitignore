@@ -1,6 +1,10 @@
 __pycache__/
-AI_functions/histories/
-AI_functions/output_data/
+
+AI_functions/histories/*
+!AI_functions/histories/.gitkeep
+AI_functions/output_data/*
+!AI_functions/output_data/.gitkeep
+
 .env
 venv/
 deleted_files/
