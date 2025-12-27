@@ -1,9 +1,0 @@
-{
-	"0":
-	{
-		"describe":"下起了金幣雨(金幣*1.25)",
-		"type":"money",
-		"amount":0,
-		"multiply":1.25
-	}
-}
