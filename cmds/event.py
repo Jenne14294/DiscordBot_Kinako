@@ -200,6 +200,7 @@ class Event(commands.Cog):
 		PVP = guild.get_role(815216698856439848)
 		Music = guild.get_role(851377111938891776)
 		RPG = guild.get_role(851800108793462804)
+		tower = guild.get_role(1458092136468582532)
 		Growth = guild.get_role(1009416690213326899)
 
 		if msg.id == 815219247382003734 and reaction == '🌏':
@@ -213,6 +214,9 @@ class Event(commands.Cog):
 
 		elif msg.id == 815219247382003734 and reaction == '🧛‍♀️':	
 			await user.add_roles(RPG)
+
+		elif msg.id == 815219247382003734 and reaction == '🏰':
+			await user.add_roles(tower)
 
 		elif msg.id == 815219247382003734 and reaction == '🌿':	
 			await user.add_roles(Growth)
@@ -231,6 +235,7 @@ class Event(commands.Cog):
 		PVP = guild.get_role(815216698856439848)
 		Music = guild.get_role(851377111938891776)
 		RPG = guild.get_role(851800108793462804)
+		tower = guild.get_role(1458092136468582532)
 		Growth = guild.get_role(1009416690213326899)
 		
 		if msg.id == 815219247382003734 and reaction == '🌏':
@@ -244,6 +249,9 @@ class Event(commands.Cog):
 
 		elif msg.id == 815219247382003734 and reaction == '🧛‍♀️':	
 			await user.remove_roles(RPG)
+
+		elif msg.id == 815219247382003734 and reaction == '🏰':
+			await user.remove_roles(tower)
 
 		elif msg.id == 815219247382003734 and reaction == '🌿':	
 			await user.remove_roles(Growth)
