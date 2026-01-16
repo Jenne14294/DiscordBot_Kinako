@@ -1,6 +1,7 @@
 import json
 import math
 import os
+import re
 import random
 import importlib
 import AI_kinako
@@ -16,6 +17,26 @@ default_guild_setting = "./guild_settings/template.json"
 
 def reload_ai():
 	importlib.reload(AI_kinako)
+
+def get_game_roles(guild):
+    role_map = {}
+
+    pattern = re.compile(r'^\[(.+?)\]\s*(.+)$')
+
+    for role in guild.roles:
+        m = pattern.match(role.name)
+        if not m:
+            continue
+
+        emoji = normalize_emoji(m.group(1))
+        role_map[emoji] = role
+
+    return role_map
+
+def normalize_emoji(s: str) -> str:
+    if "\u200d" in s:
+        return s
+    return s.replace('\uFE0F', '')
 
 class AI_HelpMenu:
 	def __init__(self):
@@ -189,72 +210,32 @@ class Event(commands.Cog):
 
 
 	@commands.Cog.listener()
-	async def on_raw_reaction_add(self,payload):
+	async def on_raw_reaction_add(self, payload):
+		if payload.member.bot or payload.guild_id != 808332107758698528:
+			return
+
 		guild = self.bot.get_guild(payload.guild_id)
-		channel = self.bot.get_channel(payload.channel_id)
-		user = guild.get_member(payload.user_id)
-		msg = await channel.fetch_message(payload.message_id)
-		reaction = payload.emoji.name
+		role_map = get_game_roles(guild)
 
-		Sandbox = guild.get_role(815216596825014272)
-		PVP = guild.get_role(815216698856439848)
-		Music = guild.get_role(851377111938891776)
-		RPG = guild.get_role(851800108793462804)
-		tower = guild.get_role(1458092136468582532)
-		Growth = guild.get_role(1009416690213326899)
-
-		if msg.id == 815219247382003734 and reaction == '🌏':
-			await user.add_roles(Sandbox)
-
-		elif msg.id == 815219247382003734 and reaction == '⚔':	
-			await user.add_roles(PVP)
-
-		elif msg.id == 815219247382003734 and reaction == '🎶':	
-			await user.add_roles(Music)
-
-		elif msg.id == 815219247382003734 and reaction == '🧛‍♀️':	
-			await user.add_roles(RPG)
-
-		elif msg.id == 815219247382003734 and reaction == '🏰':
-			await user.add_roles(tower)
-
-		elif msg.id == 815219247382003734 and reaction == '🌿':	
-			await user.add_roles(Growth)
+		role = role_map.get(payload.emoji.name)
+		if role and payload.message_id == 815219247382003734:
+			await payload.member.add_roles(role)
 
 
 
 	@commands.Cog.listener()
-	async def on_raw_reaction_remove(self,payload):
-		guild = self.bot.get_guild(payload.guild_id)
-		channel = self.bot.get_channel(payload.channel_id)
-		user = guild.get_member(payload.user_id)
-		msg = await channel.fetch_message(payload.message_id)
-		reaction = payload.emoji.name
-
-		Sandbox = guild.get_role(815216596825014272)
-		PVP = guild.get_role(815216698856439848)
-		Music = guild.get_role(851377111938891776)
-		RPG = guild.get_role(851800108793462804)
-		tower = guild.get_role(1458092136468582532)
-		Growth = guild.get_role(1009416690213326899)
+	async def on_raw_reaction_remove(self, payload):
+		if payload.guild_id != 808332107758698528:
+			return
 		
-		if msg.id == 815219247382003734 and reaction == '🌏':
-			await user.remove_roles(Sandbox)
+		guild = self.bot.get_guild(payload.guild_id)
+		member = guild.get_member(payload.user_id)
+		role_map = get_game_roles(guild)
 
-		elif msg.id == 815219247382003734 and reaction == '⚔':	
-			await user.remove_roles(PVP)
+		role = role_map.get(payload.emoji.name)
+		if role and member and payload.message_id == 815219247382003734:
+			await member.remove_roles(role)
 
-		elif msg.id == 815219247382003734 and reaction == '🎶':	
-			await user.remove_roles(Music)
-
-		elif msg.id == 815219247382003734 and reaction == '🧛‍♀️':	
-			await user.remove_roles(RPG)
-
-		elif msg.id == 815219247382003734 and reaction == '🏰':
-			await user.remove_roles(tower)
-
-		elif msg.id == 815219247382003734 and reaction == '🌿':	
-			await user.remove_roles(Growth)
 
 
 	@commands.Cog.listener()

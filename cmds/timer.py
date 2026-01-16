@@ -1132,8 +1132,6 @@ class Timer(commands.Cog):
 
 		reload_db()
 		dbFunction.daily_refresh()
-		Quests = [item['Id'] for item in dbFunction.get_HL_DQ()]
-		Members = list({member.id for guild in self.bot.guilds for member in guild.members if not member.bot})
 		
 		for file in os.listdir(temp_deleted):
 			if file == "template.json":
