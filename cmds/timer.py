@@ -1146,9 +1146,6 @@ class Timer(commands.Cog):
 
 			path = os.path.join(temp_edited, file)
 			os.remove(path)
-
-		for id in Members:
-			dbFunction.HL_DQ_refresh(random.sample(Quests, 3), id)
 		
 		await channel.send("每日已刷新")
 
