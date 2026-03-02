@@ -9,7 +9,7 @@ from google import genai
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=api_key)  # 使用 Client 來配置 API 金鑰
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-2.5-flash-lite"
 
 character = "kinako"  # 預設角色
 time_keyword = ["現在幾點", "現在時間"]
