@@ -9,7 +9,7 @@ from google import genai
 load_dotenv()
 api_key = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=api_key)  # 使用 Client 來配置 API 金鑰
-MODEL_NAME = "gemini-1.5-flash"
+MODEL_NAME = "gemini-2.5-flash"
 
 character = "kinako"  # 預設角色
 time_keyword = ["現在幾點", "現在時間"]
@@ -87,7 +87,7 @@ def ask_ai(content, image, user_id):
 	# 建立 Chat 物件時，直接把工具設定進去
 	# 這樣 AI 發現需要查資料時，會在「同一次對話」中自動完成，只消耗一次主要請求
 	chat = client.chats.create(
-		model=MODEL_NAME, # 強烈建議改用 1.5-flash 避免 quota 0 的問題
+		model=MODEL_NAME, # 強烈建議改用 2.5-flash 避免 quota 0 的問題
 		history=data,
 		config=GenerateContentConfig(
 			tools=tools_config, 
