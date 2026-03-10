@@ -62,25 +62,6 @@ class VerifyFunction:
 class MusicFunction:
 	default_path = './audio_files'
 
-	YDL_OPTIONS = {
-					"format": "bestaudio/best",
-					"extractaudio": True,
-					"audioformat": "mp3",
-					"outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
-					"restrictfilenames": True,
-					"noplaylist": True,
-					"nocheckcertificate": True,
-					"ignoreerrors": False,
-					"logtostderr": False,
-					"quiet": True,
-					"no_warnings": True,
-					"default_search": "auto",
-					"source_address": "0.0.0.0",
-					"force-ipv4": True,
-					"cachedir": False,
-					"user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-	}
-
 	FFMPEG_OPTIONS = {
 			"before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
 			"options": "-vn"
@@ -91,39 +72,29 @@ class MusicFunction:
 	
 
 	def show_information(self, url, guild_id):
-		# 🔹 Bilibili
-		if "bilibili.com" in url:
-			bilibili_opts = {
-				'format': 'bestaudio/best',  # 取得最佳音訊格式
-				'quiet': True,
-				'noplaylist': True,
-				'outtmpl': os.path.join("./audio_files", f"temp_{guild_id}.%(ext)s"),   # 以 guild.id 區分檔案
-				'postprocessors': [],         # 不轉 mp3
-			}
+		bilibili_opts = {
+			'format': 'bestaudio/best',  # 取得最佳音訊格式
+			'quiet': True,
+			'noplaylist': True,
+			'outtmpl': os.path.join("./audio_files", f"temp_{guild_id}.%(ext)s"),   # 以 guild.id 區分檔案
+			'postprocessors': [],         # 不轉 mp3
+		}
 
-			clean_tempfile()
+		with YoutubeDL(bilibili_opts) as ydl:
+			info = ydl.extract_info(url, download=True)
 
-			with YoutubeDL(bilibili_opts) as ydl:
-				info = ydl.extract_info(url, download=True)
-
-			# 正確取得實際檔名
-			file_path = os.path.abspath(f"./audio_files/temp_{guild_id}.{info['ext']}")
+		# 正確取得實際檔名
+		file_path = os.path.abspath(f"./audio_files/temp_{guild_id}.{info['ext']}")
 
 
-			# 回傳整理後資訊
-			return {
-				"title": info.get("title", "未知標題"),
-				"thumbnail": info.get("thumbnail", None),
-				"duration": info.get("duration", 0),
-				"url": file_path
-			}
+		# 回傳整理後資訊
+		return {
+			"title": info.get("title", "未知標題"),
+			"thumbnail": info.get("thumbnail", None),
+			"duration": info.get("duration", 0),
+			"url": file_path
+		}
 
-		# 🔹 YouTube 或其他網站
-		else:
-			with YoutubeDL(MusicFunction.YDL_OPTIONS) as ydl:
-				info = ydl.extract_info(url, download=False)
-
-			return info
 	
 	def get_title(self,url: str) -> str:
 		headers = {
@@ -645,6 +616,10 @@ class MusicFunction:
 					view.add_item(music)
 
 					embed.add_field(name=f"{i + 1} . {title}",value=" ",inline=False)
+
+				cancel = Button(label="取消", style=discord.ButtonStyle.secondary, custom_id="cancel")
+				cancel.callback = cancel_choose
+				view.add_item(cancel)
 
 				await interaction.edit_original_response(content=None,embed=embed,view=view)
 
@@ -1289,28 +1264,21 @@ class Timer(commands.Cog):
 				with open(path, "w", encoding="utf8") as file:
 					json.dump(data, file, indent=4, ensure_ascii=False)
 
+				clean_tempfile()
 				info = MusicFunction.show_information(self, url, guild.id)
 				URL = info['url']
 
 				# 判斷是本地檔案還是網路 URL
-				if os.path.exists(URL):
+				# if os.path.exists(URL):
 					# 本地檔案 → 不加 reconnect
-					source = PCMVolumeTransformer(FFmpegPCMAudio(URL), volume=data["volume"])
-				else:
-					# 網路串流 → 加 reconnect 選項
-					ffmpeg_options = "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
-					source = PCMVolumeTransformer(FFmpegPCMAudio(URL, options=ffmpeg_options), volume=data["volume"])
+				source = PCMVolumeTransformer(FFmpegPCMAudio(URL), volume=data["volume"])
+
 
 				embed = MusicFunction.Information(data, info, "")
 				view = MusicFunction.MusicButton()
 
-				
-
 				await text.edit(content=None, embed=embed, view=view)
-
 				voice.play(source)
-
-				
 
 			except Exception as e:
 				# print(e)
