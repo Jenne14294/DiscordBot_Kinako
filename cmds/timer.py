@@ -35,6 +35,7 @@ class VerifyFunction:
 		nick = TextInput(label = "暱稱", placeholder="該怎麼稱呼你?", style=discord.TextStyle.short, custom_id="nick", required=True)
 
 		async def on_submit(self, interaction: discord.Interaction):
+			await interaction.response.defer(ephemeral=True)
 			reload_db()
 			visit = interaction.guild.get_role(1100377865108856882)
 			await interaction.user.remove_roles(visit)
