@@ -30,36 +30,6 @@ def clean_tempfile():
 	for f in glob.glob("./audio_files/temp_*"):
 		os.remove(f)
 
-class VerifyFunction:
-	class ModalClass(Modal, title = "設定名稱"):
-		nick = TextInput(label = "暱稱", placeholder="該怎麼稱呼你?", style=discord.TextStyle.short, custom_id="nick", required=True)
-
-		async def on_submit(self, interaction: discord.Interaction):
-			await interaction.response.defer(ephemeral=True)
-			reload_db()
-			visit = interaction.guild.get_role(1100377865108856882)
-			await interaction.user.remove_roles(visit)
-			await interaction.user.edit(nick=self.nick.value)
-
-			data = register()
-			user_data = dbFunction.get_economy(interaction.user.id)
-
-			if not user_data:
-				dbFunction.register(interaction.user, data)
-
-			return
-
-	class VerifyButton(View):
-		def __init__(self):
-			super().__init__(timeout = None)
-
-			async def verify_function(interaction:discord.Interaction):
-				await interaction.response.send_modal(VerifyFunction.ModalClass())
-
-			self.verify = Button(label="點我驗證!", style=discord.ButtonStyle.primary, custom_id="verify")
-			self.verify.callback = verify_function
-			self.add_item(self.verify)
-
 class MusicFunction:
 	default_path = './audio_files'
 
@@ -1040,7 +1010,6 @@ class WeatherFunction:
 			
 			await interaction.edit_original_response(view=view)
 
-
 class Timer(commands.Cog):
 	tz = datetime.timezone(datetime.timedelta(hours = 8))
 	morning = datetime.time(hour = 7, minute = 0, tzinfo = tz)
@@ -1050,7 +1019,6 @@ class Timer(commands.Cog):
 
 	def __init__(self, bot):
 		self.bot = bot
-		self.verify_refresh.start()
 		self.weather_refresh.start()
 		self.daily_refresh.start()
 		self.greeting.start()
@@ -1059,23 +1027,12 @@ class Timer(commands.Cog):
 		self.social_update.start()
 
 	def cog_unload(self):
-		self.verify_refresh.cancel()
 		self.weather_refresh.cancel()
 		self.daily_refresh.cancel()
 		self.greeting.cancel()
 		self.auto_disconnect.cancel()
 		self.play_next.cancel()
 		self.social_update.cancel()
-
-
-	@tasks.loop(minutes = 5)
-	async def verify_refresh(self):
-		channel = self.bot.get_channel(1277331531043438593)
-		msg = await channel.fetch_message(1280097031251296267)
-
-		view = VerifyFunction.VerifyButton()
-		await msg.edit(view=view)
-
 
 	@tasks.loop(minutes=10)
 	async def weather_refresh(self):

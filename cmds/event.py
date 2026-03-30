@@ -9,6 +9,7 @@ import discord
 
 from datetime import datetime
 from discord.ext import commands
+from cmds.economy import register, reload_db
 
 path = "./jsonfile/data.json" 
 default_deleted_path = "./deleted_files/template.json"
@@ -64,12 +65,15 @@ class Event(commands.Cog):
 		with open(path, "r", encoding="utf8") as file:
 			data = json.load(file)
 
-		if guild.id == 808332107758698528:
-			visit = guild.get_role(1100377865108856882)
-			await member.add_roles(visit)
-
 		channel = self.bot.get_channel(data["join_channel"])
 		await channel.send(f"{member.mention} {data['join_message']}")
+
+		reload_db()
+		data = register()
+		user_data = dbFunction.get_economy(interaction.user.id)
+
+		if not user_data:
+			dbFunction.register(interaction.user, data)
 		
 			
 	@commands.Cog.listener()
