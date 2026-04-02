@@ -39,7 +39,6 @@ class HelpMenu:
 			self.embed.add_field(name="**[ping]**", value="顯示機器人延遲", inline=True)
 			self.embed.add_field(name="**[say <訊息>]**",value="讓機器人覆誦你的話",inline=True)
 			self.embed.add_field(name="**[pixiv <關鍵字> (全部/普通/r18) (頁數)**",value="隨機抽取pixiv圖庫",inline=True)
-			self.embed.add_field(name="**[timer <時間(秒數)>]**",value="計時器",inline=True)
 			self.embed.add_field(name="**[wheel <標題> <內容>]**",value="建立輪盤",inline=True)
 
 		def to_dict(self):
@@ -78,7 +77,7 @@ class HelpMenu:
 	class AdminMenu:
 		def __init__(self):
 			self.embed = discord.Embed(title="黃名子",description="所有權為 <@493411441832099861> 所有\n★為管理員以上才可使用\n■為獲得/扣除金幣量",color=0x3d993a)
-			self.embed.add_field(name="**[option <項目[打招呼/用戶加入/用戶離開]> <物件(頻道ID)>]**",value="設定特殊功能",inline=True)
+			self.embed.add_field(name="**[setting <項目[用戶加入/用戶離開/音樂相關/早上招呼]>]**",value="設定特殊功能",inline=True)
 			self.embed.add_field(name="**[clear <數量> (模式[以用戶刪除/以字刪除]) (目標[用戶ID/訊息內容])]**", value="清除訊息",inline=True)
 			self.embed.add_field(name="**[snipe]**", value="顯示最後五則被刪掉的訊息", inline=True)
 			self.embed.add_field(name="**[history]**", value="顯示最後五則被編輯的訊息", inline=True)
@@ -90,86 +89,122 @@ class HelpMenu:
 		
 	class ChangeLogMenu:
 		def __init__(self):
+			# 讀取 JSON 檔案 (請確保 changelog.json 放在正確的路徑)
+			with open('jsonfile/changelog.json', 'r', encoding='utf-8') as f:
+				self.logs = json.load(f)
+			
+			self.items_per_page = 10
+			self.max_pages = max(1, (len(self.logs) - 1) // self.items_per_page + 1)
 
-			self.embed = discord.Embed(title="黃名子",description="所有權為 <@493411441832099861> 所有\n★為管理員以上才可使用\n■為獲得/扣除金幣量",color=0x3d993a)
-			self.embed.add_field(name="v0.1(2020/10/20)", value="機器人出生之時", inline=True)
-			self.embed.add_field(name="v0.2(2020/10/22)",value="新增`ping`和`dice`指令",inline=True)
-			self.embed.add_field(name="v0.4(2020/10/24)",value="新增`【圖片類】`和`【二次元類】`指令",inline=True)
-			self.embed.add_field(name="v0.6(2020/10/31)", value="新增`MC`指令", inline=True)
-			self.embed.add_field(name="v0.75(2020/11/02)",value="新增`on_raw_reaction_add/remove`事件",inline=True)
-			self.embed.add_field(name="v0.9(2020/11/07)",value="新增`on_member_join/remove`事件",inline=True)
-			self.embed.add_field(name="v1.0(2020/11/12)", value="新增`【管理類】`指令並移除了`MC`指令", inline=True)
-			self.embed.add_field(name="v1.01(2020/11/16)", value="新增`game`指令", inline=True)
-			self.embed.add_field(name="v1.02(2020/11/21)", value="新增`gtn`&`ttt`&`slot`指令", inline=True)
-			self.embed.add_field(name="v1.045(2021/07/15)", value="新增`【經濟類】`指令", inline=True)
-			self.embed.add_field(name="v1.06(2021/07/18)", value="將`經濟系統`應用在`【遊戲類】`指令", inline=True)
-			self.embed.add_field(name="v1.09(2021/07/19)", value="新增`【音樂類】`指令", inline=True)
-			self.embed.add_field(name="v1.10(2021/07/20)", value="新增`【迷你探險家】`遊戲", inline=True)
-			self.embed.add_field(name="v1.12(2021/08/30)", value="新增**重置&掃蕩**到`【迷你探險家】`", inline=True)
-			self.embed.add_field(name="v1.13(2021/10/26)", value="新增自動播放下一首音樂", inline=True)
-			self.embed.add_field(name="v1.135(2021/11/09)", value="更新大部分**音樂功能**", inline=True)
-			self.embed.add_field(name="v1.25(2022/08/13)", value="觸發方式更新", inline=True)
-			self.embed.add_field(name="v1.30(2022/08/16)", value="【迷你探險家】改由按鈕遊玩", inline=True)
-			self.embed.add_field(name="v1.35(2022/10/26)", value="新增`loop(循環播放)`到音樂功能", inline=True)
-			self.embed.add_field(name="v1.5(2023/05/01)", value="新增`pp(洞洞樂)`到**遊戲功能**", inline=True)
-			self.embed.add_field(name="v1.6(2023/05/19)", value="新增【聖魂傳奇】並修正一些程式碼", inline=True)
-			self.embed.add_field(name="v1.7(2023/05/30)", value="移除了【旅者日記】並優化了**音樂功能**", inline=True)
-			self.embed.add_field(name="v1.73(2024/08/19)", value="優化【音樂類】效能及新增按鈕功能和`shuffle(隨機播放)`&`lyrics(查詢歌詞)`功能", inline=True)
-			self.embed.add_field(name="v1.76(2024/09/28)", value="新增早安天氣查詢功能，讓`snipe`&`history`能查詢更多", inline=True)
-
-		def to_dict(self):
-			return self.embed.to_dict()
+		def get_page(self, page: int) -> discord.Embed:
+			embed = discord.Embed(
+				title=f"黃名子 開發日誌 (第 {page}/{self.max_pages} 頁)",
+				description="所有權為 <@493411441832099861> 所有\n★為管理員以上才可使用\n■為獲得/扣除金幣量",
+				color=0x3d993a
+			)
+			
+			start_idx = (page - 1) * self.items_per_page
+			end_idx = start_idx + self.items_per_page
+			
+			# 遍歷 JSON 陣列裡的字典
+			for log in self.logs[start_idx:end_idx]:
+				embed.add_field(name=log["name"], value=log["value"], inline=True)
+				
+			return embed
 		
 	class MenuChanger(discord.ui.View):
 		def __init__(self, timeout: float | None = 180):
-			super().__init__(timeout = timeout)
-			self.game = Button(label="遊戲",style=discord.ButtonStyle.primary,custom_id="game",emoji="🎮")
-			self.function = Button(label="功能",style=discord.ButtonStyle.primary,custom_id="function",emoji="⚙️")
-			self.economy = Button(label="經濟",style=discord.ButtonStyle.primary,custom_id="money",emoji="💰")
-			self.music = Button(label="音樂",style=discord.ButtonStyle.primary,custom_id="music",emoji="🎵")
-			self.admin = Button(label="管理",style=discord.ButtonStyle.primary,custom_id="admin",emoji="🔧")
-			self.changelog = Button(label="開發日誌",style=discord.ButtonStyle.primary,custom_id="changelog",emoji="📃")
+			super().__init__(timeout=timeout)
+			
+			# --- 分頁相關狀態紀錄 ---
+			self.changelog_page = 1 
+			self.changelog_obj = HelpMenu.ChangeLogMenu() # 實例化你上面的 ChangeLogMenu
+			
+			# --- 定義按鈕 (使用 row 參數將按鈕分行，避免排版混亂) ---
+			self.game = Button(label="遊戲", style=discord.ButtonStyle.primary, custom_id="game", emoji="🎮", row=0)
+			self.function = Button(label="功能", style=discord.ButtonStyle.primary, custom_id="function", emoji="⚙️", row=0)
+			self.economy = Button(label="經濟", style=discord.ButtonStyle.primary, custom_id="money", emoji="💰", row=0)
+			self.music = Button(label="音樂", style=discord.ButtonStyle.primary, custom_id="music", emoji="🎵", row=0)
+			self.admin = Button(label="管理", style=discord.ButtonStyle.primary, custom_id="admin", emoji="🔧", row=1)
+			self.changelog = Button(label="開發日誌", style=discord.ButtonStyle.primary, custom_id="changelog", emoji="📃", row=1)
+			
+			# 翻頁按鈕預設不直接加入 (稍後動態顯示)，放在 row=2
+			self.prev_btn = Button(label="上一頁", style=discord.ButtonStyle.secondary, custom_id="prev_page", emoji="⬅️", row=2)
+			self.next_btn = Button(label="下一頁", style=discord.ButtonStyle.secondary, custom_id="next_page", emoji="➡️", row=2)
 
-			async def Button_callback(interaction):
-				await interaction.response.defer()			
-				if interaction.data["custom_id"] == "game":
+			async def Button_callback(interaction: discord.Interaction):
+				await interaction.response.defer()          
+				cid = interaction.data["custom_id"]
+
+				# 如果點擊的【不是】開發日誌或翻頁按鈕，就隱藏(移除)翻頁按鈕
+				if cid not in ["changelog", "prev_page", "next_page"]:
+					if self.prev_btn in self.children:
+						self.remove_item(self.prev_btn)
+					if self.next_btn in self.children:
+						self.remove_item(self.next_btn)
+
+				# --- 原有選單邏輯 ---
+				if cid == "game":
 					embed = HelpMenu.GameMenu()
-					await interaction.edit_original_response(embed=embed)
+					await interaction.edit_original_response(embed=embed, view=self)
 					
-				if interaction.data["custom_id"] == "function":
+				elif cid == "function":
 					embed = HelpMenu.FunctionMenu()
-					await interaction.edit_original_response(embed=embed)
+					await interaction.edit_original_response(embed=embed, view=self)
 
-				if interaction.data["custom_id"] == "money":
+				elif cid == "money":
 					embed = HelpMenu.EconomyMenu()
-					await interaction.edit_original_response(embed=embed)
+					await interaction.edit_original_response(embed=embed, view=self)
 					
-				if interaction.data["custom_id"] == "music":
+				elif cid == "music":
 					embed = HelpMenu.MusicMenu()
-					await interaction.edit_original_response(embed=embed)
+					await interaction.edit_original_response(embed=embed, view=self)
 				
-				if interaction.data["custom_id"] == "admin":
+				elif cid == "admin":
 					embed = HelpMenu.AdminMenu()
-					await interaction.edit_original_response(embed=embed)
+					await interaction.edit_original_response(embed=embed, view=self)
 
-				if interaction.data["custom_id"] == "changelog":
-					embed = HelpMenu.ChangeLogMenu()
-					await interaction.edit_original_response(embed=embed)
+				# --- 開發日誌與翻頁邏輯 ---
+				elif cid in ["changelog", "prev_page", "next_page"]:
+					if cid == "changelog":
+						self.changelog_page = 1  # 每次點擊開發日誌重置為第1頁
+					elif cid == "prev_page":
+						self.changelog_page = max(1, self.changelog_page - 1)
+					elif cid == "next_page":
+						self.changelog_page = min(self.changelog_obj.max_pages, self.changelog_page + 1)
 
+					# 確保翻頁按鈕有在畫面上
+					if self.prev_btn not in self.children:
+						self.add_item(self.prev_btn)
+					if self.next_btn not in self.children:
+						self.add_item(self.next_btn)
+
+					# 第一頁時停用上一頁，最後一頁時停用下一頁
+					self.prev_btn.disabled = (self.changelog_page == 1)
+					self.next_btn.disabled = (self.changelog_page == self.changelog_obj.max_pages)
+
+					# 獲取對應頁數的 Embed，並更新 View (包含翻頁按鈕)
+					embed = self.changelog_obj.get_page(self.changelog_page)
+					await interaction.edit_original_response(embed=embed, view=self)
+
+			# 綁定回呼函數 (Callbacks)
 			self.game.callback = Button_callback
 			self.admin.callback = Button_callback
 			self.function.callback = Button_callback
 			self.economy.callback = Button_callback
 			self.music.callback = Button_callback
 			self.changelog.callback = Button_callback
+			self.prev_btn.callback = Button_callback
+			self.next_btn.callback = Button_callback
 
+			# 將初始主按鈕加進 View 裡面
 			self.add_item(self.game)
-			self.add_item(self.admin)
 			self.add_item(self.function)
 			self.add_item(self.economy)
 			self.add_item(self.music)
+			self.add_item(self.admin)
 			self.add_item(self.changelog)
-
+	
 class Function(commands.Cog):
 	def __init__(self,bot): 
 		self.bot = bot
