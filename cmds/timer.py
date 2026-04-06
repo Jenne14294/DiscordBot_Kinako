@@ -10,6 +10,7 @@ import dbFunction
 import datetime
 import re
 import glob
+import aiohttp
 
 from discord.ext import commands, tasks
 from discord.utils import get
@@ -19,6 +20,10 @@ from pytube import Playlist
 from yt_dlp import YoutubeDL
 from bs4 import BeautifulSoup
 from cmds.economy import register, reload_db
+from dotenv import load_dotenv
+
+# 載入 .env 檔案中的環境變數
+load_dotenv()
 
 
 temp_deleted = "./deleted_files"
@@ -798,217 +803,97 @@ class MusicFunction:
 				await interaction.edit_original_response(embed=embed, view=view)
 
 class WeatherFunction:
-	def get_data(location):
+	# 1. 將字典設為類別屬性，方便內部呼叫
+	REGION_DATA = {
+		"北部": ["臺北市", "新北市", "基隆市", "新竹縣", "新竹市", "桃園市", "宜蘭縣"],
+		"中部": ["臺中市", "苗栗縣", "彰化縣", "南投縣", "雲林縣"],
+		"南部": ["高雄市", "臺南市", "嘉義市", "屏東縣", "澎湖縣"],
+		"東部": ["花蓮縣", "臺東縣"],
+		"離島": ["金門縣", "連江縣"]
+	}
+
+	# 2. 獲取資料的方法 (設為靜態方法)
+	@staticmethod
+	async def fetch_data(location: str):
+		url = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001"
+		api_key = os.getenv("WEATHER_KEY") # 讀取 .env 中的 Key
 		
-		url = "https://opendata.cwa.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWA-16DF2507-7442-40B1-9532-3608485F6ED1"
 		params = {
-			"Authorization": "CWA-16DF2507-7442-40B1-9532-3608485F6ED1",
+			"Authorization": api_key,
 			"locationName": location,
 		}
-		response = requests.get(url, params=params)
-
-		if response.status_code == 200:
-			data = json.loads(response.text)
-
-			weather_elements = data["records"]["location"][0]["weatherElement"]
-			weather_state = weather_elements[0]["time"][0]["parameter"]["parameterName"]
-			rain_prob = weather_elements[1]["time"][0]["parameter"]["parameterName"]
-			min_tem = weather_elements[2]["time"][0]["parameter"]["parameterName"]
-			comfort = weather_elements[3]["time"][0]["parameter"]["parameterName"]
-			max_tem = weather_elements[4]["time"][0]["parameter"]["parameterName"]
-
-			weather_data = {}
-			weather_data["location"] = location
-			weather_data["weather_state"] = weather_state
-			weather_data["comfort"] = comfort
-			weather_data["min_tem"] = min_tem
-			weather_data["max_tem"] = max_tem
-			weather_data["rain_prob"] = rain_prob
-
-			return weather_data
 		
+		async with aiohttp.ClientSession() as session:
+			async with session.get(url, params=params) as response:
+				if response.status == 200:
+					data = await response.json()
+					weather_elements = data["records"]["location"][0]["weatherElement"]
+					return {
+						"location": location,
+						"weather_state": weather_elements[0]["time"][0]["parameter"]["parameterName"],
+						"rain_prob": weather_elements[1]["time"][0]["parameter"]["parameterName"],
+						"min_tem": weather_elements[2]["time"][0]["parameter"]["parameterName"],
+						"comfort": weather_elements[3]["time"][0]["parameter"]["parameterName"],
+						"max_tem": weather_elements[4]["time"][0]["parameter"]["parameterName"]
+					}
 		return None
-	
-	class Information:
-		def __init__(self, data, message):
-			now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-			self.embed = discord.Embed(title=now, description=message, color=0x3d993a)
-			if data:
-				self.embed.add_field(name="當前地區", value=data["location"], inline=False)
-				self.embed.add_field(name="天氣概況", value=data["weather_state"], inline=False)
-				self.embed.add_field(name="舒適度", value=data["comfort"], inline=False)
-				self.embed.add_field(name='溫度', value=f"{data['min_tem']} ~ {data['max_tem']} °C", inline=False)
-				self.embed.add_field(name='降雨機率', value=f"{data['rain_prob']} %", inline=False)
 
-		def to_dict(self):
-			return self.embed.to_dict()
-		
-	class WeatherView(View):
-		def __init__(self):
-			super().__init__(timeout = None)
+	# 3. 建立 Embed 的方法 (設為靜態方法)
+	@staticmethod
+	def create_embed(data: dict, message: str = "") -> discord.Embed:
+		now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		embed = discord.Embed(title=now, description=message, color=0x3d993a)
+		if data:
+			embed.add_field(name="當前地區", value=data["location"], inline=False)
+			embed.add_field(name="天氣概況", value=data["weather_state"], inline=False)
+			embed.add_field(name="舒適度", value=data["comfort"], inline=False)
+			embed.add_field(name='溫度', value=f"{data['min_tem']} ~ {data['max_tem']} °C", inline=False)
+			embed.add_field(name='降雨機率', value=f"{data['rain_prob']} %", inline=False)
+		return embed
 
-			self.add_item(WeatherFunction.ZoneSelect())
+	# 4. 單一城市按鈕 (巢狀類別)
+	class CityButton(Button):
+		def __init__(self, city_name: str):
+			super().__init__(label=city_name, style=discord.ButtonStyle.primary, custom_id=city_name)
 
-	class NorthButton(View):
-		def __init__(self):
-			super().__init__(timeout=None)
-
-			async def show_info(interaction):
-				await interaction.response.defer()
-				locate = interaction.data["custom_id"]
-				data = WeatherFunction.get_data(locate)
-				embed = WeatherFunction.Information(data, "")
-
-				await interaction.edit_original_response(embed=embed)
-
-			Taipei = Button(label="臺北市", style=discord.ButtonStyle.primary, custom_id="臺北市")
-			Newpei = Button(label="新北市", style=discord.ButtonStyle.primary, custom_id="新北市")
-			Keelung = Button(label="基隆市", style=discord.ButtonStyle.primary, custom_id="基隆市")
-			hsinchu = Button(label="新竹縣", style=discord.ButtonStyle.primary, custom_id="新竹縣")
-			Hsinchu = Button(label="新竹市", style=discord.ButtonStyle.primary, custom_id="新竹市")
-			Taoyuan = Button(label="桃園市", style=discord.ButtonStyle.primary, custom_id="桃園市")
-			Yilan = Button(label="宜蘭縣", style=discord.ButtonStyle.primary, custom_id="宜蘭縣")
-
-			self.add_item(Taipei)
-			self.add_item(Newpei)
-			self.add_item(Keelung)
-			self.add_item(hsinchu)
-			self.add_item(Hsinchu)
-			self.add_item(Taoyuan)
-			self.add_item(Yilan)
-
-			for child in self.children:
-				child.callback = show_info
-
-	class CenterButton(View):
-		def __init__(self):
-			super().__init__(timeout=None)
-
-			async def show_info(interaction):
-				await interaction.response.defer()
-				locate = interaction.data["custom_id"]
-				data = WeatherFunction.get_data(locate)
-				embed = WeatherFunction.Information(data, "")
-
-				await interaction.edit_original_response(embed=embed)
-
-			Taichung = Button(label="臺中市", style=discord.ButtonStyle.primary, custom_id="臺中市")
-			Mioali = Button(label="苗栗縣", style=discord.ButtonStyle.primary, custom_id="苗栗縣")
-			Changhua = Button(label="彰化縣", style=discord.ButtonStyle.primary, custom_id="彰化縣")
-			Nantou = Button(label="南投縣", style=discord.ButtonStyle.primary, custom_id="南投縣")
-			Yunlin = Button(label="雲林縣", style=discord.ButtonStyle.primary, custom_id="雲林縣")
-
-			self.add_item(Taichung)
-			self.add_item(Mioali)
-			self.add_item(Changhua)
-			self.add_item(Nantou)
-			self.add_item(Yunlin)
-
-			for child in self.children:
-				child.callback = show_info
-
-	class SouthButton(View):
-		def __init__(self):
-			super().__init__(timeout=None)
-
-			async def show_info(interaction):
-				await interaction.response.defer()
-				locate = interaction.data["custom_id"]
-				data = WeatherFunction.get_data(locate)
-				embed = WeatherFunction.Information(data, "")
-
-				await interaction.edit_original_response(embed=embed)
-
-			Kaosiung = Button(label="高雄市", style=discord.ButtonStyle.primary, custom_id="高雄市")
-			Tainan = Button(label="臺南市", style=discord.ButtonStyle.primary, custom_id="臺南市")
-			Chiayi = Button(label="嘉義市", style=discord.ButtonStyle.primary, custom_id="嘉義市")
-			Pington = Button(label="屏東縣", style=discord.ButtonStyle.primary, custom_id="屏東縣")
-			Penghu = Button(label="澎湖縣", style=discord.ButtonStyle.primary, custom_id="澎湖縣")
-
-			self.add_item(Kaosiung)
-			self.add_item(Tainan)
-			self.add_item(Chiayi)
-			self.add_item(Pington)
-			self.add_item(Penghu)
-
-			for child in self.children:
-				child.callback = show_info
-
-	class EastButton(View):
-		def __init__(self):
-			super().__init__(timeout=None)
-
-			async def show_info(interaction):
-				await interaction.response.defer()
-				locate = interaction.data["custom_id"]
-				data = WeatherFunction.get_data(locate)
-				embed = WeatherFunction.Information(data, "")
-
-				await interaction.edit_original_response(embed=embed)
-
-			Taitung = Button(label="臺東縣", style=discord.ButtonStyle.primary, custom_id="臺東縣")
-			Hualien = Button(label="花蓮縣", style=discord.ButtonStyle.primary, custom_id="花蓮縣")
-
-			self.add_item(Taitung)
-			self.add_item(Hualien)
-	
-			for child in self.children:
-				child.callback = show_info
-
-	class IslandButton(View):
-		def __init__(self):
-			super().__init__(timeout=None)
-
-			async def show_info(interaction):
-				await interaction.response.defer()
-				locate = interaction.data["custom_id"]
-				data = WeatherFunction.get_data(locate)
-				embed = WeatherFunction.Information(data, "")
-
-				await interaction.edit_original_response(embed=embed)
-
-			Kinmen = Button(label="金門縣", style=discord.ButtonStyle.primary, custom_id="金門縣")
-			Lienchiang = Button(label="連江縣", style=discord.ButtonStyle.primary, custom_id="連江縣")
-
-			self.add_item(Kinmen)
-			self.add_item(Lienchiang)
-	
-			for child in self.children:
-				child.callback = show_info
-
+		async def callback(self, interaction: discord.Interaction):
+			await interaction.response.defer()
 			
+			# 呼叫外部類別的靜態方法
+			data = await WeatherFunction.fetch_data(self.custom_id)
+			if data:
+				embed = WeatherFunction.create_embed(data)
+				await interaction.edit_original_response(embed=embed)
+			else:
+				await interaction.edit_original_response(content="無法獲取天氣資料，請稍後檢查 API 設定。")
 
-				
-	class ZoneSelect(Select): 
+	# 5. 區域下拉選單 (巢狀類別)
+	class ZoneSelect(Select):
 		def __init__(self):
 			options = [
-				discord.SelectOption(label="北部", description="臺北、新北、基隆、新竹縣、新竹市、桃園、宜蘭"),
+				discord.SelectOption(label="北部", description="臺北、新北、基隆、新竹、桃園、宜蘭"),
 				discord.SelectOption(label="中部", description="臺中、苗栗、彰化、南投、雲林"),
 				discord.SelectOption(label="南部", description="高雄、臺南、嘉義、屏東、澎湖"),
 				discord.SelectOption(label="東部", description="花蓮、臺東"),
 				discord.SelectOption(label="離島", description="金門、連江"),
-				]
-			super().__init__(placeholder="選擇一個縣市", min_values=1, max_values=1, options=options)
-			
-	
+			]
+			super().__init__(placeholder="選擇一個區域", min_values=1, max_values=1, options=options)
+
 		async def callback(self, interaction: discord.Interaction):
 			await interaction.response.defer()
-			value = self.values[0]
-
-			if value == "北部":
-				view = WeatherFunction.NorthButton()
-			elif value == "中部":
-				view = WeatherFunction.CenterButton()
-			elif value == "南部":
-				view = WeatherFunction.SouthButton()
-			elif value == "東部":
-				view = WeatherFunction.EastButton()
-			else:
-				view = WeatherFunction.IslandButton()
-
+			selected_region = self.values[0]
+			
+			# 實例化一個新的 View
+			view = View(timeout=None)
+			
+			# 根據選擇的區域，動態生成對應的縣市按鈕
+			for city in WeatherFunction.REGION_DATA[selected_region]:
+				view.add_item(WeatherFunction.CityButton(city))
+				
+			# 把下拉式選單加回去，讓使用者可以繼續切換區域
 			view.add_item(WeatherFunction.ZoneSelect())
 			
-			await interaction.edit_original_response(view=view)
+			await interaction.edit_original_response(content=f"已切換至 {selected_region}，請選擇縣市：", view=view, embed=None)
 
 class Timer(commands.Cog):
 	tz = datetime.timezone(datetime.timedelta(hours = 8))
@@ -1036,25 +921,50 @@ class Timer(commands.Cog):
 
 	@tasks.loop(minutes=10)
 	async def weather_refresh(self):
-		tem = "./guild_settings"
+		tem_dir = "./guild_settings"
+		
 		for guild in self.bot.guilds:
-			path = os.path.join(tem, f"{guild.id}.json")
+			path = os.path.join(tem_dir, f"{guild.id}.json")
 
+			# 1. 檢查檔案是否存在
 			if not os.path.exists(path):
 				continue
 
-			with open(path, "r", encoding="utf8") as file:
-				data = json.load(file)
-
-			if not data["greet_channel"]:
+			# 2. 讀取設定 (建議之後改用記憶體快取)
+			try:
+				with open(path, "r", encoding="utf8") as file:
+					data = json.load(file)
+			except Exception as e:
+				print(f"讀取 {guild.id} 設定失敗: {e}")
 				continue
-				
-			channel = self.bot.get_channel(data["greet_channel"])
-			msg = await channel.fetch_message(data["greet_message_id"])
 
-			if msg:
-				view = WeatherFunction.WeatherView()
+			# 3. 檢查頻道與訊息 ID 是否存在
+			channel_id = data.get("greet_channel")
+			message_id = data.get("greet_message_id")
+			if not channel_id or not message_id:
+				continue
+
+			channel = self.bot.get_channel(channel_id)
+			if not channel:
+				continue
+
+			# 4. 抓取並編輯訊息 (加上錯誤處理)
+			try:
+				# 使用 fetch 確保訊息還在
+				msg = await channel.fetch_message(message_id)
+				
+				# 重新實例化 View 並更新
+				# 提示：如果按鈕不需要動態改變文字，其實不需要每 10 分鐘重新 edit 訊息
+				# 除非你的 View 裡面有顯示「最後更新時間」
+				view = WeatherFunction.MainView() 
 				await msg.edit(view=view)
+				
+			except discord.NotFound:
+				print(f"在伺服器 {guild.id} 找不到打招呼訊息，可能已被刪除。")
+			except discord.Forbidden:
+				print(f"機器人沒有權限在 {guild.id} 編輯該訊息。")
+			except Exception as e:
+				print(f"更新 {guild.id} 發生未知錯誤: {e}")
 
 	@tasks.loop(time=midnight)
 	async def daily_refresh(self):

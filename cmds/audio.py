@@ -7,6 +7,7 @@ import random
 import importlib
 import AI_title
 import re
+import html
 
 from pytube import Playlist
 from discord.ext import commands
@@ -58,29 +59,51 @@ def get_title(url: str) -> str:
     try:
         r = requests.get(url, headers=headers, timeout=10)
         r.raise_for_status()
+        
+        # 【關鍵修復】強制指定 UTF-8 解碼，防止 requests 預設使用 ISO-8859-1 產生亂碼
+        r.encoding = 'utf-8' 
+        
     except Exception as e:
         return f"[錯誤] 無法連線: {e}"
 
-    html = r.text
+    html_text = r.text
     title = "未知標題"
 
-    # YouTube 標題擷取
+    # 1. YouTube 標題擷取
     if "youtube.com" in url or "youtu.be" in url:
-        match = re.search(r'"title":"(.*?)"', html)
+        # 優先：直接抓取網頁的 <title>，最單純且不易受 JSON 格式變動影響
+        match = re.search(r'<title>(.*?)</title>', html_text, re.S)
         if match:
-            title = match.group(1).encode('utf-8').decode('unicode_escape')  # JSON escape 才 decode
-
-    # Bilibili 標題擷取
-    if "bilibili.com" in url:
-        # 直接抓 <title> 標籤或 JSON 內 title
-        match = re.search(r'<title>(.*?)</title>', html, re.S)
-        if match:
-            title = match.group(1).strip()
+            # 清除結尾的 " - YouTube" 後綴
+            title = match.group(1).replace(" - YouTube", "").strip()
+            # 處理 HTML 實體符號，例如 &amp; -> &
+            title = html.unescape(title)
         else:
-            # fallback: JSON 格式 title
-            match = re.search(r'"title":"(.*?)"', html)
+            # 備案：從 JSON 結構中抓取
+            match = re.search(r'"title":"(.*?)"', html_text)
             if match:
-                title = match.group(1).encode('utf-8').decode('unicode_escape')
+                try:
+                    # 使用 json.loads 安全解析包含 \uXXXX 的字串
+                    title = json.loads(f'"{match.group(1)}"')
+                except json.JSONDecodeError:
+                    title = match.group(1)
+
+    # 2. Bilibili 標題擷取
+    elif "bilibili.com" in url:
+        # B站標題可能有 data-vue-meta 屬性
+        match = re.search(r'<title[^>]*>(.*?)</title>', html_text, re.S)
+        if match:
+            # 清除 Bilibili 預設的結尾後綴
+            title = match.group(1).replace("_哔哩哔哩_bilibili", "").strip()
+            title = html.unescape(title)
+        else:
+            # 備案：從 JSON 抓取
+            match = re.search(r'"title":"(.*?)"', html_text)
+            if match:
+                try:
+                    title = json.loads(f'"{match.group(1)}"')
+                except json.JSONDecodeError:
+                    title = match.group(1)
 
     return title
 
