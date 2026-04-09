@@ -851,6 +851,14 @@ class WeatherFunction:
 			embed.add_field(name='降雨機率', value=f"{data['rain_prob']} %", inline=False)
 		return embed
 
+	class MainView(View):
+		def __init__(self):
+			# timeout=None 確保按鈕與選單不會因為超時而失效 (需在機器人啟動時 add_view 註冊)
+			super().__init__(timeout=None) 
+			
+			# 初始化時，將「區域下拉選單」加入到這個主視圖中
+			self.add_item(WeatherFunction.ZoneSelect())
+
 	# 4. 單一城市按鈕 (巢狀類別)
 	class CityButton(Button):
 		def __init__(self, city_name: str):
