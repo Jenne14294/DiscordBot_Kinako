@@ -824,7 +824,7 @@ class WeatherFunction:
 		}
 		
 		async with aiohttp.ClientSession() as session:
-			async with session.get(url, params=params) as response:
+			async with session.get(url, params=params, ssl=False) as response:
 				if response.status == 200:
 					data = await response.json()
 					weather_elements = data["records"]["location"][0]["weatherElement"]
