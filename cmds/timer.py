@@ -1050,11 +1050,11 @@ class Timer(commands.Cog):
 	@tasks.loop(seconds=1)
 	async def auto_disconnect(self):
 		tem = "./audio_files"
-		for file in os.listdir(tem):
-			if file == "template.json":
+		for filename in os.listdir(tem):
+			if not filename.endswith(".json") or filename == "template.json":
 				continue
 
-			path = os.path.join(tem, file)
+			path = os.path.join(tem, filename)
 			
 			with open(path, "r", encoding="utf8") as file:
 				data = json.load(file)
