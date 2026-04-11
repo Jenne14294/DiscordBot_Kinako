@@ -1004,29 +1004,47 @@ class Timer(commands.Cog):
 	@tasks.loop(time=morning, count=1)
 	async def greeting(self):
 		tem = "./guild_settings"
+		
 		for guild in self.bot.guilds:
 			path = os.path.join(tem, f"{guild.id}.json")
 
+			# 1. 檢查設定檔是否存在
 			if not os.path.exists(path):
 				continue
 
 			with open(path, "r", encoding="utf8") as file:
 				data = json.load(file)
 
-			if not data["greet_channel"]:
+			# 2. 檢查是否有設定早安頻道 (使用 .get() 比較安全，避免 KeyError)
+			if not data.get("greet_channel"):
 				continue
 			
+			# 3. 獲取頻道物件，並防呆檢查頻道是否還存在(可能被刪除了)
 			channel = self.bot.get_channel(data["greet_channel"])
-			msg = data["greet_message"] if data["greet_message"] != None else "大家早安~今天又是新的一天"
+			if channel is None:
+				continue
 
-			embed = WeatherFunction.Information(None, msg)
-			view = WeatherFunction.WeatherView()
-			message = await channel.send(embed=embed, view=view)
+			# 4. 設定早安訊息內容
+			msg = data.get("greet_message") if data.get("greet_message") else "大家早安~今天又是新的一天，請選擇你想查詢天氣的區域："
 
-			data["greet_message_id"] = message.id
+			# 🟢 5. 關鍵修正：呼叫我們稍早定義的 create_embed 與 MainView
+			# 這裡 data 傳入 None，create_embed 會只顯示 msg，不會報錯 (因為我們之前有寫 if data: 判斷)
+			embed = WeatherFunction.create_embed(data=None, message=msg)
+			view = WeatherFunction.MainView()
+			
+			try:
+				# 6. 發送包含「早安訊息」與「天氣下拉選單」的訊息
+				message = await channel.send(embed=embed, view=view)
 
-			with open(path, "w", encoding="utf8") as file:
-				json.dump(data, file, indent=4, ensure_ascii=False)
+				# 7. 儲存發送出去的訊息 ID，方便未來更新或刪除
+				data["greet_message_id"] = message.id
+				with open(path, "w", encoding="utf8") as file:
+					json.dump(data, file, indent=4, ensure_ascii=False)
+					
+			except discord.Forbidden:
+				print(f"❌ 錯誤：機器人沒有權限在 {guild.name} 的頻道發送訊息。")
+			except Exception as e:
+				print(f"❌ 發送早安訊息時發生未知的錯誤: {e}")
 
 
 	@tasks.loop(seconds=1)

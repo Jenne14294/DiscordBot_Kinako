@@ -209,7 +209,8 @@ class Admin(commands.Cog):
 		app_commands.Choice(name="離開設定(leave_settings)",value=2),
 		app_commands.Choice(name="音樂設定(music_settings)",value=3),
 		app_commands.Choice(name="早安設定(greet_settings)",value=4),
-		app_commands.Choice(name="重置設定(reset_settings)",value=-1)
+		app_commands.Choice(name="查看設定(view_settings)",value=0),
+		app_commands.Choice(name="重置設定(reset_settings)",value=-1),
 	])
 	@app_commands.checks.has_permissions(administrator=True)
 	async def settings(self, interaction:discord.Interaction, 類別:app_commands.Choice[int]):
@@ -221,6 +222,15 @@ class Admin(commands.Cog):
 				json.dump(temp_data, file, indent=4, ensure_ascii=False)
 
 			await interaction.response.send_message("設定已重置！")
+
+		if 類別.value == 0:
+			with open(f"./guild_settings/{interaction.guild_id}.json", "r", encoding="utf8") as file:
+				data = json.load(file)
+
+			await interaction.response.send_message(f"目前設定：\n加入頻道: <#{data['join_channel']}>\n加入訊息: {data['join_message']}\n離開頻道: <#{data['leave_channel']}>\n離開訊息: {data['leave_message']}\n自動斷線時間: {data['AD_time']}秒\n早安頻道: <#{data['greet_channel']}>\n早安訊息: {data['greet_message']}")
+			return
+
+
 		if 類別.value == 1:
 			modal = SettingFunction.join_settings()
 			await interaction.response.send_modal(modal)
