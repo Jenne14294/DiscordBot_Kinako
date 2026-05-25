@@ -6,6 +6,7 @@ import random
 import importlib
 import AI_kinako
 import discord
+import dbFunction
 
 from datetime import datetime
 from discord.ext import commands
@@ -66,7 +67,8 @@ class Event(commands.Cog):
 			data = json.load(file)
 
 		channel = self.bot.get_channel(data["join_channel"])
-		await channel.send(f"{member.mention} {data['join_message']}")
+		if channel:
+			await channel.send(f"{member.mention} {data['join_message']}")
 
 		reload_db()
 		data = register()
@@ -85,7 +87,8 @@ class Event(commands.Cog):
 			data = json.load(file)
 
 		channel = self.bot.get_channel(data["leave_channel"])
-		await channel.send(f"{member.mention} {data['leave_message']}")
+		if channel:
+			await channel.send(f"{member.mention} {data['leave_message']}")
 
 
 	@commands.Cog.listener()
@@ -107,7 +110,7 @@ class Event(commands.Cog):
 		user = msg.author
 		try:
 			if not user.bot:
-				num = random.randint(1, 25) 
+				num = random.randint(1, 50) 
 				emoji_list = [f"<:{emoji.name}:{emoji.id}>" for guild in self.bot.guilds for emoji in guild.emojis] 
 				if num == 9 and not msg.author.bot: 
 					await msg.add_reaction(random.choice(emoji_list))

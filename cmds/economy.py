@@ -8,119 +8,17 @@ from discord import app_commands
 from discord.ui import View, Button, TextInput, Modal
 
 def register():
-	hl_maxHP = random.randint(200,500)
-	hl_maxMP = random.randint(50,150)
-
 	data = {
 			'money': 5000, 
 			'daily': 0, 
 			'reset': 0, 
 			'bank':0,
-			'status':{	
-				'level':1,
-				'class':'無',
-				'HP':hl_maxHP,
-				'maxHP':hl_maxHP,
-				'MP':hl_maxMP,
-				'maxMP':hl_maxMP,
-				'SP':hl_maxHP * 3,
-				'maxSP':hl_maxHP * 3,
-				'STR':random.randint(0,5),
-				'DEX':random.randint(0,5),
-				'CON':random.randint(0,5),
-				'INT':random.randint(0,5),
-				'action':0,
-				'maxAction':0,
-				'EXP':0,
-				'baseEXP':150,
-				'ATTpoints':0,
-				'skillpoints':0
-		},
-		'weapons':{},
-		'items':{},
-		'armour':{},
-		'equipments':
-		{
-			'mainhand': "無",
-			'offhand': "無",
-			'helmet': "無",
-			'armor': "無",
-			'leggings': "無",
-			'boots': "無",
-			'necklace': "無",
-			'ring1': "無",
-			'ring2': "無",
-			'cloak': "無",
-			'amulet': "無"
-			},
-		'skills':[],
-		'Quests':
-		{
-			'MQID':0,
-			'SQlist':[],
-			'DQlist':[]
-		},
-		"PVPchance":5,
-		'mapID':"0",
-		'enemies':
-		{
-			'enemy1':
-			{
-				'name':'無',
-				'HP':0,
-				'MP':0,
-				'ATK':0,
-				'DEF':0,
-				'SPD':0,
-				'skills':[]
-			},
-			'enemy2':
-						{	
-							'name':'無',	
-							'HP':0,	
-							'MP':0,
-							'ATK':0,
-							'DEF':0,
-							'SPD':0,
-							'skills':[]
-						},
-						'enemy3':
-						{	
-							'name':'無',	
-							'HP':0,	
-							'MP':0,
-							'ATK':0,
-							'DEF':0,
-							'SPD':0,
-							'skills':[]
-						},
-						'enemy4':
-						{	
-							'name':'無',	
-							'HP':0,	
-							'MP':0,
-							'ATK':0,
-							'DEF':0,
-							'SPD':0,
-							'skills':[]
-						},
-						'enemy5':{	
-							'name':'無',	
-							'HP':0,	
-							'MP':0,
-							'ATK':0,
-							'DEF':0,
-							'SPD':0,
-							'skills':[]
-						}
-					}
-				}
+	}
 	
 	return data
 
 def reload_db():
 	importlib.reload(dbFunction)
-
 
 
 class WalletFunction:
