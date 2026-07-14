@@ -250,14 +250,14 @@ class Admin(commands.Cog):
 	
 	@app_commands.command(description="擷取最後五則被刪除的訊息")
 	@app_commands.checks.has_permissions(view_audit_log=True)
-	async def snipe(self, interaction:discord.Interaction):
-		path = f"./deleted_files/{interaction.guild.id}.json"
+	async def snipe(self, interaction: discord.Interaction):
+		path = f"./deleted_files/{interaction.guild.id}/data.json"
 
 		if not os.path.exists(path):
 			await interaction.response.send_message("目前沒有被刪除的訊息")
 			return
 
-		with open(path,"r",encoding="utf8") as file:
+		with open(path, "r", encoding="utf8") as file:
 			data = json.load(file)
 
 		if data["author"] == []:
@@ -269,16 +269,17 @@ class Admin(commands.Cog):
 			
 		await interaction.response.send_message(embed=embed, view=view)
 
+
 	@app_commands.command(description="擷取最後五則被編輯的訊息")
 	@app_commands.checks.has_permissions(view_audit_log=True)
-	async def history(self, interaction:discord.Interaction):
-		path = f"./edited_files/{interaction.guild.id}.json"
+	async def history(self, interaction: discord.Interaction):
+		path = f"./edited_files/{interaction.guild.id}/data.json"
 
 		if not os.path.exists(path):
 			await interaction.response.send_message("目前沒有被編輯的訊息")
 			return
 
-		with open(path,"r",encoding="utf8") as file:
+		with open(path, "r", encoding="utf8") as file:
 			data = json.load(file)
 
 		if data["author"] == []:

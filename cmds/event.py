@@ -246,28 +246,50 @@ class Event(commands.Cog):
 
 
 	@commands.Cog.listener()
-	async def on_message_delete(self,msg):
+	async def on_message_delete(self, msg):
 		if msg.author.bot:
 			return
-		
-		deleted = self.bot.get_channel(1109828448626679888)
-		path = f"./deleted_files/{msg.guild.id}.json"
 
-		attachments = [msg.attachments[i].proxy_url for i in range(len(msg.attachments))]
+		deleted = self.bot.get_channel(1109828448626679888)
+
+		# 伺服器資料夾
+		guild_folder = f"./deleted_files/{msg.guild.id}"
+		os.makedirs(guild_folder, exist_ok=True)
+
+		# JSON 路徑
+		path = os.path.join(guild_folder, "data.json")
+
+		# 建立附件資料夾
+		attachment_folder = os.path.join(guild_folder, "attachments")
+		os.makedirs(attachment_folder, exist_ok=True)
+
+		# 儲存附件
+		attachments = []
+		for attachment in msg.attachments:
+			filename = f"{int(datetime.now().timestamp() * 1000)}_{attachment.filename}"
+			filepath = os.path.join(attachment_folder, filename)
+
+			try:
+				await attachment.save(filepath)
+				attachments.append(filepath)
+			except Exception as e:
+				print(f"附件下載失敗：{e}")
+
 		content = msg.content if msg.content != "" else ""
 		author = msg.author.name
 		channel = msg.channel.id
 		time = datetime.now().strftime("%m-%d %H:%M:%S")
 
+		# 讀取紀錄
 		if os.path.exists(path):
-			with open(path,"r",encoding="utf8") as file:
+			with open(path, "r", encoding="utf8") as file:
 				data = json.load(file)
-		
 		else:
 			with open(default_deleted_path, "r", encoding="utf8") as file:
 				data = json.load(file)
 
-		if len(data["author"]) == 5:
+		# 保留最近5筆
+		if len(data["author"]) >= 5:
 			data["author"].pop(0)
 			data["content"].pop(0)
 			data["channel"].pop(0)
@@ -279,48 +301,66 @@ class Event(commands.Cog):
 		data["channel"].append(channel)
 		data["attachments"].append(attachments)
 		data["time"].append(time)
-			
+
+		# 寫入 JSON
 		with open(path, "w", encoding="utf8") as file:
 			json.dump(data, file, indent=4, ensure_ascii=False)
 
 		fromcha = msg.channel.id
-		await deleted.send(f"訊息：{msg.content}\n傳送者：{msg.author.name}\n附件：{attachments}\n頻道：<#{fromcha}>\n時間：{time}")
+
+		await deleted.send(
+			f"訊息：{content}\n"
+			f"傳送者：{author}\n"
+			f"附件：{attachments}\n"
+			f"頻道：<#{fromcha}>\n"
+			f"時間：{time}"
+		)
 
 	@commands.Cog.listener()
 	async def on_message_edit(self, before, after):
 		if before.author.bot:
 			return
-		
+
 		if before.content == after.content:
 			return
-		
-		edited = self.bot.get_channel(1109828448626679888)
-		path = f"./edited_files/{before.guild.id}.json"
 
-		Bcontent = before.content if before.content != "" else ""
-		Acontent = after.content if after.content != "" else ""
+		edited = self.bot.get_channel(1109828448626679888)
+
+		# guild 資料夾
+		guild_folder = f"./edited_files/{before.guild.id}"
+		os.makedirs(guild_folder, exist_ok=True)
+
+		path = os.path.join(guild_folder, "data.json")
+
+		Bcontent = before.content or ""
+		Acontent = after.content or ""
 		author = before.author.name
 		channel = before.channel.id
 		date = datetime.now().strftime("%m-%d %H:%M:%S")
 		BID = before.id
-		
+
+		# 讀取紀錄
 		if os.path.exists(path):
-			with open(path,"r",encoding="utf8") as file:
+			with open(path, "r", encoding="utf8") as file:
 				data = json.load(file)
-		
 		else:
 			with open(default_edited_path, "r", encoding="utf8") as file:
 				data = json.load(file)
 
+		# 超過20筆編輯紀錄刪除最舊
 		if len(data["author"]) > 4:
-			data["BID"].pop(0)
-			data["author"].pop(0)
-			data["Bcontent"].pop(0)
-			data["Acontent"].pop(0)
-			data["channel"].pop(0)
-			data["date"].pop(0)
+			for key in ["BID", "author", "Bcontent", "Acontent", "channel", "date"]:
+				data[key].pop(0)
 
-		if BID not in data["BID"]:
+		# 同一訊息編輯
+		if BID in data["BID"]:
+			index = data["BID"].index(BID)
+
+			if len(data["Acontent"][index]) < 21:
+				data["Acontent"][index].append(Acontent)
+
+		# 新訊息編輯
+		else:
 			data["BID"].append(BID)
 			data["author"].append(author)
 			data["Bcontent"].append(Bcontent)
@@ -328,17 +368,17 @@ class Event(commands.Cog):
 			data["channel"].append(channel)
 			data["date"].append(date)
 
-		else:
-			index = data["BID"].index(BID)
-			
-			if len(data["Acontent"][index]) < 21:
-				data["Acontent"][index].append(Acontent)
-			
+		# 儲存
 		with open(path, "w", encoding="utf8") as file:
 			json.dump(data, file, indent=4, ensure_ascii=False)
 
-		fromcha = before.channel.id
-		await edited.send(f"編輯前訊息：{Bcontent}\n編輯後訊息：{Acontent}\n傳送者：{author}\n頻道：<#{fromcha}>\n時間：{date}")
+		await edited.send(
+			f"編輯前訊息：{Bcontent}\n"
+			f"編輯後訊息：{Acontent}\n"
+			f"傳送者：{author}\n"
+			f"頻道：<#{channel}>\n"
+			f"時間：{date}"
+		)
 
 	@commands.Cog.listener()
 	async def on_voice_state_update(self, member, before, after):

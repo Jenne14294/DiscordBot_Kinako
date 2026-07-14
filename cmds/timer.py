@@ -11,6 +11,7 @@ import datetime
 import re
 import glob
 import aiohttp
+import shutil
 
 from discord.ext import commands, tasks
 from discord.utils import get
@@ -34,6 +35,18 @@ def clean_tempfile():
 	# 刪除暫存檔
 	for f in glob.glob("./audio_files/temp_*"):
 		os.remove(f)
+
+def clear_record_folder(folder):
+	for file in os.listdir(folder):
+		if file == "template.json":
+			continue
+
+		path = os.path.join(folder, file)
+
+		if os.path.isdir(path):
+			shutil.rmtree(path)
+		else:
+			os.remove(path)
 
 class MusicFunction:
 	default_path = './audio_files'
@@ -983,21 +996,11 @@ class Timer(commands.Cog):
 
 		reload_db()
 		dbFunction.daily_refresh()
-		
-		for file in os.listdir(temp_deleted):
-			if file == "template.json":
-				continue
 
-			path = os.path.join(temp_deleted, file)
-			os.remove(path)
+		# 清除刪除訊息紀錄與編輯紀錄
+		clear_record_folder(temp_deleted)
+		clear_record_folder(temp_edited)
 
-		for file in os.listdir(temp_edited):
-			if file == "template.json":
-				continue
-
-			path = os.path.join(temp_edited, file)
-			os.remove(path)
-		
 		await channel.send("每日已刷新")
 
 
