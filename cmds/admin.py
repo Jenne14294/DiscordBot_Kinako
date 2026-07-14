@@ -38,7 +38,7 @@ class SnipeFunction:
 			async def change_page(interaction:discord.Interaction):
 				await interaction.response.defer()
 				function = interaction.data["custom_id"]
-				path = f"./deleted_files/{interaction.guild.id}.json"
+				path = f"./deleted_files/{interaction.guild.id}/data.json"
 
 				with open(path, "r", encoding="utf8") as file:
 					data = json.load(file)
@@ -99,7 +99,7 @@ class HistoryFunction:
 			async def change_page(interaction:discord.Interaction):
 				await interaction.response.defer()
 				function = interaction.data["custom_id"]
-				path = f"./edited_files/{interaction.guild.id}.json"
+				path = f"./deleted_files/{interaction.guild.id}/data.json"
 
 				with open(path, "r", encoding="utf8") as file:
 					data = json.load(file)
