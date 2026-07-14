@@ -2,10 +2,14 @@ import discord
 import json
 import os
 import asyncio
+from dotenv import load_dotenv
 
 from discord.ext import commands
 from discord import app_commands
 from discord.ui import Modal, TextInput
+
+load_dotenv()
+BASE_URL = os.getenv("BASE_URL")
 
 class SnipeFunction:
 	class ShowInfo:
@@ -18,11 +22,24 @@ class SnipeFunction:
 			time = data["time"][n - 1]
 			x = len(data["author"])
 
-			self.embed = discord.Embed(title=f"被刪除的訊息(第 {n} 則 / 共 {x} 則)", description="擷取結果", color=0x3d993a)
+			if attachments:
+				attachment_text = "\n".join(
+					f"[附件{i+1}]({BASE_URL}{file})"
+					for i, file in enumerate(attachments)
+				)
+			else:
+				attachment_text = "無"
+
+			self.embed = discord.Embed(
+				title=f"被刪除的訊息(第 {n} 則 / 共 {x} 則)",
+				description="擷取結果",
+				color=0x3d993a
+			)
+
 			self.embed.add_field(name="訊息作者", value=author, inline=True)
-			self.embed.add_field(name="訊息內容", value=content, inline=True)
+			self.embed.add_field(name="訊息內容", value=content if content else "無", inline=True)
 			self.embed.add_field(name="訊息頻道", value=f"<#{channel}>", inline=True)
-			self.embed.add_field(name="訊息附件", value=attachments, inline=True)
+			self.embed.add_field(name="訊息附件", value=attachment_text, inline=False)
 			self.embed.add_field(name="訊息時間", value=time, inline=True)
 
 		def to_dict(self):

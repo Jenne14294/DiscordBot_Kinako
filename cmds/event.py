@@ -271,7 +271,12 @@ class Event(commands.Cog):
 
 			try:
 				await attachment.save(filepath)
-				attachments.append(filepath)
+
+				# 儲存網站相對路徑
+				attachments.append(
+					f"{msg.guild.id}/attachments/{filename}"
+				)
+
 			except Exception as e:
 				print(f"附件下載失敗：{e}")
 
