@@ -250,29 +250,53 @@ class Event(commands.Cog):
 		if msg.author.bot:
 			return
 
+		# 預設使用原訊息
+		target_msg = msg
+
+		# 如果是回覆/轉發訊息，嘗試取得原訊息
+		if msg.reference and msg.reference.message_id:
+			try:
+				channel = self.bot.get_channel(msg.reference.channel_id)
+
+				if channel:
+					target_msg = await channel.fetch_message(
+						msg.reference.message_id
+					)
+
+			except Exception as e:
+				print(f"取得引用訊息失敗: {e}")
+
 		deleted = self.bot.get_channel(1109828448626679888)
 
-		# 伺服器資料夾
 		guild_folder = f"./deleted_files/{msg.guild.id}"
 		os.makedirs(guild_folder, exist_ok=True)
 
-		# JSON 路徑
 		path = os.path.join(guild_folder, "data.json")
 
-		# 建立附件資料夾
-		attachment_folder = os.path.join(guild_folder, "attachments")
+		attachment_folder = os.path.join(
+			guild_folder,
+			"attachments"
+		)
+
 		os.makedirs(attachment_folder, exist_ok=True)
 
-		# 儲存附件
 		attachments = []
-		for attachment in msg.attachments:
-			filename = f"{int(datetime.now().timestamp() * 1000)}_{attachment.filename}"
-			filepath = os.path.join(attachment_folder, filename)
+
+		# 從 target_msg 抓附件
+		for attachment in target_msg.attachments:
+			filename = (
+				f"{int(datetime.now().timestamp()*1000)}_"
+				f"{attachment.filename}"
+			)
+
+			filepath = os.path.join(
+				attachment_folder,
+				filename
+			)
 
 			try:
 				await attachment.save(filepath)
 
-				# 儲存網站相對路徑
 				attachments.append(
 					f"deleted_files/{msg.guild.id}/attachments/{filename}"
 				)
@@ -280,44 +304,55 @@ class Event(commands.Cog):
 			except Exception as e:
 				print(f"附件下載失敗：{e}")
 
-		content = msg.content if msg.content != "" else ""
-		author = msg.author.name
-		channel = msg.channel.id
-		time = datetime.now().strftime("%m-%d %H:%M:%S")
 
-		# 讀取紀錄
+		content = msg.content or ""
+
+		author = msg.author.name
+
+		channel_id = msg.channel.id
+
+		time = datetime.now().strftime(
+			"%m-%d %H:%M:%S"
+		)
+
+
+		# 讀取資料
 		if os.path.exists(path):
 			with open(path, "r", encoding="utf8") as file:
 				data = json.load(file)
+
 		else:
 			with open(default_deleted_path, "r", encoding="utf8") as file:
 				data = json.load(file)
 
-		# 保留最近5筆
+
+		# 保留5筆
 		if len(data["author"]) >= 5:
-			data["author"].pop(0)
-			data["content"].pop(0)
-			data["channel"].pop(0)
-			data["attachments"].pop(0)
-			data["time"].pop(0)
+			for key in data:
+				data[key].pop(0)
+
 
 		data["author"].append(author)
 		data["content"].append(content)
-		data["channel"].append(channel)
+		data["channel"].append(channel_id)
 		data["attachments"].append(attachments)
 		data["time"].append(time)
 
-		# 寫入 JSON
-		with open(path, "w", encoding="utf8") as file:
-			json.dump(data, file, indent=4, ensure_ascii=False)
 
-		fromcha = msg.channel.id
+		with open(path, "w", encoding="utf8") as file:
+			json.dump(
+				data,
+				file,
+				indent=4,
+				ensure_ascii=False
+			)
+
 
 		await deleted.send(
 			f"訊息：{content}\n"
 			f"傳送者：{author}\n"
 			f"附件：{attachments}\n"
-			f"頻道：<#{fromcha}>\n"
+			f"頻道：<#{channel_id}>\n"
 			f"時間：{time}"
 		)
 

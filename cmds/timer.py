@@ -1,4 +1,4 @@
-import scrapetube
+import feedparser
 import json
 import discord
 import os 
@@ -1185,16 +1185,26 @@ class Timer(commands.Cog):
 
 	@tasks.loop(minutes=1)
 	async def social_update(self):
-		YTUpdate = self.bot.get_channel(1112978654809575505)
-		videos = scrapetube.get_channel("UCR4-1FIAu5hKt6wuz7RTj2w")
+		YTUpdate = self.bot.get_channel(1527181259074175077)
 
-		ID = next(videos)['videoId']
-		text = [message async for message in YTUpdate.history(limit=5)][0]
+		feed = feedparser.parse(
+			"https://www.youtube.com/feeds/videos.xml?channel_id=UCG3hBfZxzLixJPZQ9QUP_Lw"
+		)
 
-		yt_msg = f"https://www.youtube.com/watch?v={ID}"
+		video = feed.entries[0]
 
-		if yt_msg not in text.content:
-			await YTUpdate.send(f"傑尼已經出片了喔~還不趕快去看!\n{yt_msg}")
+		yt_msg = video.link
+
+		messages = [
+			message async for message in YTUpdate.history(limit=5)
+		]
+
+		if messages and yt_msg not in messages[0].content:
+			await YTUpdate.send(
+				f"🐟 蘿貝塔出片啦！\n"
+				f"魚油們快來看看貝塔的新影片吧💙\n"
+				f"{yt_msg}"
+			)
 
 
 async def setup(bot):
