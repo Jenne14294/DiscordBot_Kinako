@@ -1185,26 +1185,37 @@ class Timer(commands.Cog):
 
 	@tasks.loop(minutes=1)
 	async def social_update(self):
-		YTUpdate = self.bot.get_channel(1527181259074175077)
+		try:
+			YTUpdate = self.bot.get_channel(1527181259074175077)
 
-		feed = feedparser.parse(
-			"https://www.youtube.com/feeds/videos.xml?channel_id=UCG3hBfZxzLixJPZQ9QUP_Lw"
-		)
+			if YTUpdate is None:
+				print("找不到 YouTube 通知頻道")
+				return
 
-		video = feed.entries[0]
-
-		yt_msg = video.link
-
-		messages = [
-			message async for message in YTUpdate.history(limit=5)
-		]
-
-		if messages and yt_msg not in messages[0].content:
-			await YTUpdate.send(
-				f"🐟 蘿貝塔出片啦！\n"
-				f"魚油們快來看看貝塔的新影片吧💙\n"
-				f"{yt_msg}"
+			feed = feedparser.parse(
+				"https://www.youtube.com/feeds/videos.xml?channel_id=UCG3hBfZxzLixJPZQ9QUP_Lw"
 			)
+
+			if not feed.entries:
+				print("RSS 沒有影片資料")
+				return
+
+			video = feed.entries[0]
+			yt_msg = video.link
+
+			messages = [
+				message async for message in YTUpdate.history(limit=5)
+			]
+
+			if not messages or yt_msg not in messages[0].content:
+				await YTUpdate.send(
+					f"🐟 蘿貝塔出片啦！\n"
+					f"魚油們快來看看貝塔的新影片吧💙\n"
+					f"{yt_msg}"
+				)
+
+		except Exception as e:
+			print(f"YT通知錯誤: {type(e).__name__}: {e}")
 
 
 async def setup(bot):
