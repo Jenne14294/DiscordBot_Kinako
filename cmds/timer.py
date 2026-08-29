@@ -930,7 +930,7 @@ class Timer(commands.Cog):
 		self.greeting.start()
 		self.auto_disconnect.start()
 		self.play_next.start()
-		self.social_update.start()
+		# self.social_update.start()
 
 	def cog_unload(self):
 		self.weather_refresh.cancel()
@@ -938,7 +938,7 @@ class Timer(commands.Cog):
 		self.greeting.cancel()
 		self.auto_disconnect.cancel()
 		self.play_next.cancel()
-		self.social_update.cancel()
+		# self.social_update.cancel()
 
 	@tasks.loop(minutes=10)
 	async def weather_refresh(self):
@@ -1192,26 +1192,34 @@ class Timer(commands.Cog):
 				print("找不到 YouTube 通知頻道")
 				return
 
-			feed = feedparser.parse(
-				"https://www.youtube.com/feeds/videos.xml?channel_id=UCG3hBfZxzLixJPZQ9QUP_Lw"
-			)
+			# 這裡換成你目前抓 X 推文的方式
+			tweets = get_latest_tweets()
 
-			if not feed.entries:
-				print("RSS 沒有影片資料")
+			if not tweets:
 				return
 
-			video = feed.entries[0]
-			yt_msg = video.link
+			for tweet in tweets:
+				# 只檢查 YouTube Live 待機室
+				match = re.search(
+					r'https?://(?:www\.)?youtube\.com/live/[^\s]+',
+					tweet.text
+				)
 
-			messages = [
-				message async for message in YTUpdate.history(limit=5)
-			]
+				if not match:
+					continue
 
-			if not messages or yt_msg not in messages[0].content:
+				yt_url = match.group(0)
+
+				# 避免同一篇推文重複通知
+				if tweet.id in self.yt_notified:
+					continue
+
+				self.yt_notified.add(tweet.id)
+
 				await YTUpdate.send(
-					f"🐟 蘿貝塔出片啦！\n"
-					f"魚油們快來看看貝塔的新影片吧💙\n"
-					f"{yt_msg}"
+					f"🐟 蘿貝塔要開台啦！\n"
+					f"魚油們快來看看貝塔的新直播吧💙\n"
+					f"{yt_url}"
 				)
 
 		except Exception as e:

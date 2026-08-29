@@ -116,7 +116,7 @@ class HistoryFunction:
 			async def change_page(interaction:discord.Interaction):
 				await interaction.response.defer()
 				function = interaction.data["custom_id"]
-				path = f"./deleted_files/{interaction.guild.id}/data.json"
+				path = f"./edited_files/{interaction.guild.id}/data.json"
 
 				with open(path, "r", encoding="utf8") as file:
 					data = json.load(file)
@@ -244,8 +244,35 @@ class Admin(commands.Cog):
 			with open(f"./guild_settings/{interaction.guild_id}.json", "r", encoding="utf8") as file:
 				data = json.load(file)
 
-			await interaction.response.send_message(f"目前設定：\n加入頻道: <#{data['join_channel']}>\n加入訊息: {data['join_message']}\n離開頻道: <#{data['leave_channel']}>\n離開訊息: {data['leave_message']}\n自動斷線時間: {data['AD_time']}秒\n早安頻道: <#{data['greet_channel']}>\n早安訊息: {data['greet_message']}")
-			return
+			embed = discord.Embed(
+				title="⚙️ 目前設定",
+				color=discord.Color.blue()
+			)
+
+			embed.add_field(
+				name="👋 加入",
+				value=f"頻道：<#{data['join_channel']}>\n訊息：{data['join_message']}",
+				inline=False
+			)
+
+			embed.add_field(
+				name="👋 離開",
+				value=f"頻道：<#{data['leave_channel']}>\n訊息：{data['leave_message']}",
+				inline=False
+			)
+
+			embed.add_field(
+				name="🌅 早安",
+				value=f"頻道：<#{data['greet_channel']}>\n訊息：{data['greet_message']}",
+				inline=False
+			)
+
+			embed.add_field(
+				name="🎵 自動斷線",
+				value=f"{data['AD_time']} 秒"
+			)
+
+			await interaction.response.send_message(embed=embed)
 
 
 		if 類別.value == 1:
