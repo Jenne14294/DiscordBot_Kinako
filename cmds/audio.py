@@ -50,62 +50,62 @@ def reload():
 	importlib.reload(AI_title)
 
 def get_title(url: str) -> str:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) "
-                      "Chrome/118.0.0.0 Safari/537.36"
-    }
+	headers = {
+		"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+					  "AppleWebKit/537.36 (KHTML, like Gecko) "
+					  "Chrome/118.0.0.0 Safari/537.36"
+	}
 
-    try:
-        r = requests.get(url, headers=headers, timeout=10)
-        r.raise_for_status()
-        
-        # 【關鍵修復】強制指定 UTF-8 解碼，防止 requests 預設使用 ISO-8859-1 產生亂碼
-        r.encoding = 'utf-8' 
-        
-    except Exception as e:
-        return f"[錯誤] 無法連線: {e}"
+	try:
+		r = requests.get(url, headers=headers, timeout=10)
+		r.raise_for_status()
+		
+		# 【關鍵修復】強制指定 UTF-8 解碼，防止 requests 預設使用 ISO-8859-1 產生亂碼
+		r.encoding = 'utf-8' 
+		
+	except Exception as e:
+		return f"[錯誤] 無法連線: {e}"
 
-    html_text = r.text
-    title = "未知標題"
+	html_text = r.text
+	title = "未知標題"
 
-    # 1. YouTube 標題擷取
-    if "youtube.com" in url or "youtu.be" in url:
-        # 優先：直接抓取網頁的 <title>，最單純且不易受 JSON 格式變動影響
-        match = re.search(r'<title>(.*?)</title>', html_text, re.S)
-        if match:
-            # 清除結尾的 " - YouTube" 後綴
-            title = match.group(1).replace(" - YouTube", "").strip()
-            # 處理 HTML 實體符號，例如 &amp; -> &
-            title = html.unescape(title)
-        else:
-            # 備案：從 JSON 結構中抓取
-            match = re.search(r'"title":"(.*?)"', html_text)
-            if match:
-                try:
-                    # 使用 json.loads 安全解析包含 \uXXXX 的字串
-                    title = json.loads(f'"{match.group(1)}"')
-                except json.JSONDecodeError:
-                    title = match.group(1)
+	# 1. YouTube 標題擷取
+	if "youtube.com" in url or "youtu.be" in url:
+		# 優先：直接抓取網頁的 <title>，最單純且不易受 JSON 格式變動影響
+		match = re.search(r'<title>(.*?)</title>', html_text, re.S)
+		if match:
+			# 清除結尾的 " - YouTube" 後綴
+			title = match.group(1).replace(" - YouTube", "").strip()
+			# 處理 HTML 實體符號，例如 &amp; -> &
+			title = html.unescape(title)
+		else:
+			# 備案：從 JSON 結構中抓取
+			match = re.search(r'"title":"(.*?)"', html_text)
+			if match:
+				try:
+					# 使用 json.loads 安全解析包含 \uXXXX 的字串
+					title = json.loads(f'"{match.group(1)}"')
+				except json.JSONDecodeError:
+					title = match.group(1)
 
-    # 2. Bilibili 標題擷取
-    elif "bilibili.com" in url:
-        # B站標題可能有 data-vue-meta 屬性
-        match = re.search(r'<title[^>]*>(.*?)</title>', html_text, re.S)
-        if match:
-            # 清除 Bilibili 預設的結尾後綴
-            title = match.group(1).replace("_哔哩哔哩_bilibili", "").strip()
-            title = html.unescape(title)
-        else:
-            # 備案：從 JSON 抓取
-            match = re.search(r'"title":"(.*?)"', html_text)
-            if match:
-                try:
-                    title = json.loads(f'"{match.group(1)}"')
-                except json.JSONDecodeError:
-                    title = match.group(1)
+	# 2. Bilibili 標題擷取
+	elif "bilibili.com" in url:
+		# B站標題可能有 data-vue-meta 屬性
+		match = re.search(r'<title[^>]*>(.*?)</title>', html_text, re.S)
+		if match:
+			# 清除 Bilibili 預設的結尾後綴
+			title = match.group(1).replace("_哔哩哔哩_bilibili", "").strip()
+			title = html.unescape(title)
+		else:
+			# 備案：從 JSON 抓取
+			match = re.search(r'"title":"(.*?)"', html_text)
+			if match:
+				try:
+					title = json.loads(f'"{match.group(1)}"')
+				except json.JSONDecodeError:
+					title = match.group(1)
 
-    return title
+	return title
 
 def get_lyrics(title):
 	client_access_token = "aW0PCZtUaF6ol8tBEFw6iAQ0dYakXRLpb_1nYzoOJBnAIbzctmdBK7c3IvcvE5Hs"
@@ -288,46 +288,56 @@ class Audio(commands.Cog):
 			with open(path,"r",encoding="utf8") as file:
 				data = json.load(file)
 				
-			try:
+			
+			if isinstance(item, discord.Interaction):
 				url = item.data["custom_id"]
-				urlList.append(url)
-				player_list = [interaction.user.name]
-
-				TITLE = get_title(url)
-
-			except:
+				requester = item.user.name
+			else:
 				url = item
-				
-				if "list" in url and "youtube" in url:
-					urlList = list(Playlist(url))
-					TITLE = Playlist(url).title
-					player_list = [interaction.user.name] * len(urlList)
+				requester = interaction.user.name
 
-				elif "list" in url and "bilibili" in url:
-					# yt_dlp 選項
-					ydl_opts = {
-						'extract_flat': True,   # 只解析清單，不下載影片
-						'quiet': True,
-						'skip_download': True
-					}
+			ydl_opts = {
+				"quiet": True,
+				"extract_flat": True,
+				"noplaylist": False,
+			}
 
-					with YoutubeDL(ydl_opts) as ydl:
-						info = ydl.extract_info(url, download=False)
+			with YoutubeDL(ydl_opts) as ydl:
+				info = ydl.extract_info(url, download=False)
 
-					# info['title'] 是播放清單標題
-					TITLE = info.get('title', '未知清單')
+			if info.get("entries") is not None:
+				# YouTube / Bilibili 播放清單
+				urlList = []
 
-					# 每個 entry 是清單裡的影片
-					urlList = [entry['url'] for entry in info.get('entries', [])]
+				for entry in info["entries"]:
+					if not entry:
+						continue
 
-					# 建立對應使用者名稱的播放列表
-					player_list = [interaction.user.name] * len(urlList)
-					
-				else:
-					urlList.append(url)
-					player_list = [interaction.user.name]
+					video_url = entry.get("webpage_url") or entry.get("url")
+					video_id = entry.get("id")
 
-					TITLE = get_title(url)
+					if video_id and (
+						not video_url or not video_url.startswith("http")
+					):
+						extractor = entry.get("ie_key", "")
+
+						if "Bili" in extractor:
+							video_url = f"https://www.bilibili.com/video/{video_id}"
+						else:
+							video_url = f"https://www.youtube.com/watch?v={video_id}"
+
+					if video_url:
+						urlList.append(video_url)
+
+				TITLE = info.get("title", "未知播放清單")
+				player_list = [requester] * len(urlList)
+
+			else:
+				# 單一影片
+				urlList = [info.get("webpage_url") or url]
+				TITLE = info.get("title", "未知影片")
+				player_list = [requester]
+
 
 			response = await interaction.edit_original_response(content=f"***{TITLE}*** 已經新增到歌單了",embed=None,view=None)
 				

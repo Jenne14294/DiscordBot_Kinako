@@ -514,51 +514,81 @@ class MusicFunction:
 
 				await interaction.edit_original_response(embed=embed, view=view)
 
-			async def choose_video(item:discord.Interaction):
-				urlList = []					
+			
+			async def choose_video(item):
 				path = f"./audio_files/{interaction.guild_id}.json"
-								
-				with open(path,"r",encoding="utf8") as file:
+
+				with open(path, "r", encoding="utf8") as file:
 					data = json.load(file)
 
-				channel = interaction.channel
-				text = await channel.fetch_message(data["text"])
-
-				try:
+				# 搜尋結果按鈕傳入 Interaction，直接輸入網址則傳入字串
+				if isinstance(item, discord.Interaction):
 					url = item.data["custom_id"]
-					urlList.append(url)
-					player_list = [interaction.user.name]
-
-					TITLE = MusicFunction.get_title(self, url)
-
-				except:
+					requester = item.user.name
+				else:
 					url = item
-					
-					if "list" in url:
-						urlList = list(Playlist(url))
-						TITLE = Playlist(url).title
-						player_list = [interaction.user.name] * len(urlList)
-						
-					else:
-						urlList.append(url)
-						player_list = [interaction.user.name]
+					requester = interaction.user.name
 
-						TITLE = MusicFunction.get_title(self, url)
+				ydl_opts = {
+					"quiet": True,
+					"extract_flat": True,
+					"noplaylist": False,
+				}
+
+				with YoutubeDL(ydl_opts) as ydl:
+					info = ydl.extract_info(url, download=False)
+
+				# 判斷是否為播放清單
+				if info.get("entries") is not None:
+					urlList = []
+
+					for entry in info["entries"]:
+						if not entry:
+							continue
+
+						video_url = entry.get("webpage_url")
+
+						if not video_url:
+							video_id = entry.get("id")
+							if video_id:
+								video_url = f"https://www.youtube.com/watch?v={video_id}"
+
+						if video_url:
+							urlList.append(video_url)
+
+					TITLE = info.get("title", "YouTube 播放清單")
+					player_list = [requester] * len(urlList)
+
+				else:
+					urlList = [info.get("webpage_url", url)]
+					TITLE = info.get("title", "未知影片")
+					player_list = [requester]
+
+				if not urlList:
+					await interaction.edit_original_response(
+						content="無法取得影片網址，請確認影片或播放清單是否有效。",
+						embed=None,
+						view=None,
+					)
+					return
 
 				statusText = f"***{TITLE}*** 已經新增到歌單了"
-				
+
 				data["url"].extend(urlList)
 				data["player"].extend(player_list)
 
-				with open(path,"w",encoding="utf8") as file:
-					json.dump(data,file,indent=4)
+				with open(path, "w", encoding="utf8") as file:
+					json.dump(data, file, indent=4, ensure_ascii=False)
 
-				info = MusicFunction.show_information(self, data["nowurl"], interaction.guild_id)
+				info = MusicFunction.show_information(
+					self, data["nowurl"], interaction.guild_id
+				)
 
 				embed = MusicFunction.Information(data, info, statusText)
 				view = MusicFunction.MusicButton()
 
 				await interaction.edit_original_response(embed=embed, view=view)
+
 
 			search = self.search.value
 
