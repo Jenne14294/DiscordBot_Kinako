@@ -9,7 +9,6 @@ import AI_title
 import re
 import html
 
-from pytube import Playlist
 from discord.ext import commands
 from discord.ui import Button, View, TextInput, Modal
 from discord import app_commands

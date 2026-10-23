@@ -17,7 +17,6 @@ from discord.ext import commands, tasks
 from discord.utils import get
 from discord.ui import Button, Modal, TextInput, View, Select
 from discord import FFmpegPCMAudio, PCMVolumeTransformer
-from pytube import Playlist
 from yt_dlp import YoutubeDL
 from bs4 import BeautifulSoup
 from cmds.economy import register, reload_db
